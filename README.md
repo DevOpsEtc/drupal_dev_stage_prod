@@ -10,16 +10,16 @@ Kicked off via osx/playbook.yml
 Kicked off via vagrant/vagrantfile
 
 ### Old bash path expansions
-{{< highlight shell "style=native">}}
+```
 p_ply=$HOME/work/provision/playbook         # path: ansible assets
 p_inv=$p_ply/inventory                      # path: ansible inventory
 p_pbk=$p_ply/playbook.yml                   # path: ansible main playbook
 p_vl=$p_ply/vars/vault_local.yml            # path: ansible vault_local.yml
 p_vs=$p_ply/vars/vault_server.yml           # path: ansible vault_server.yml
-{{< /highlight >}}
+```
 
 ### Old bash aliases
-{{< highlight shell "style=native">}}
+```
 c_ap="ansible-playbook -i $p_inv $p_pbk"    # command: playbook & options
 c_ap2=--ask-vault-pass                      # command: playbook vault option
 alias avl='ansible-vault edit $p_vl'        # decrypt & edit vault_local.yml
@@ -37,7 +37,7 @@ alias aad='ansible -i $p_inv dev -a'        # run adhoc command: dev [command]
 alias aas='ansible -i $p_inv stage -a'      # run adhoc command: stage [command]
 alias aap='ansible -i $p_inv prod -a'       # run adhoc command: prod [command]
 alias aaP='ansible -i $p_inv all -m ping'   # run adhoc ping: all
-{{< /highlight >}}
+```
 
 ### Notes:
 This is an abandoned project that's only here for my personal reference
