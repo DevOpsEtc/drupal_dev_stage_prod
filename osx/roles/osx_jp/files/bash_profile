@@ -1,4 +1,0 @@
-# load .bashrc, if present
-if [ -f $HOME/.bashrc ]; then
-   source $HOME/.bashrc
-fi
