@@ -1,0 +1,132 @@
+# vim:fdm=marker
+---
+
+  ##########################################################
+  #  filename: app_config.yml 		                         #
+  #  path:     ~/.provision/playbook/roles/osx/tasks/  #
+  #  version:  04/05/2015                                  #
+  #  purpose:  app config                                  #
+  ##########################################################
+
+- name: app config | starting playlist
+  tags: [app_config, voice]
+  osx_say: msg="app config playlist is starting" voice={{ v_voice }}
+
+- name: app config | printer presets
+  tags: [app_config, printer]
+  copy:
+    src=com.apple.print.custompresets.forprinter.Canon_MX712.plist
+    dest={{ v_lib }}preferences/
+    owner={{ v_user }}
+
+- name: app config | mail settings
+  tags: [app_config, mail]
+  command: defaults write com.apple.mail {{ item }}
+  with_items:
+    - AddressesIncludeNameOnPasteboard -bool false # copy email address w/out name
+    - DraftsViewerAttributes -dict-add "DisplayInThreadedMode" -string "yes" # threaded mode
+    - DraftsViewerAttributes -dict-add "SortOrder" -string "received-date" # sort @date
+    - DraftsViewerAttributes -dict-add "SortedDescending" -string "yes" # oldest @top
+    - SendWindowsFriendlyAttachments -bool true # send Win-friendly attachments
+    - DisableInlineAttachmentViewing -bool yes # show attachments as icons
+
+- name: app config | calendar settings
+  tags: [app_config, calendar]
+  command: defaults write com.apple.iCal {{ item }}
+  with_items:
+    - '"Show Week Numbers" -bool false'
+    - '"n days of week" -int 7' # show 7 days
+    - '"first day of week" -int 1' # start week on monday
+    - '"Show time in Month View" -bool true' # how event times
+
+- name: app config | contact settings
+  tags: [app_config, contacts]
+  command: defaults write com.apple.AddressBook {{ item }}
+  with_items:
+    - ABNameDisplay -int 2 # display first name, then last name
+    - ABNameSortingFormat -string "sortingLastName sortingFirstName" # sort by last name
+
+- name: app config | preview settings
+  tags: [app_config, preview]
+  command: defaults write com.apple.Preview NSQuitAlwaysKeepsWindows -bool false
+
+- name: app config | chrome settings
+  tags: [app_config, chrome]
+  command: defaults write com.google.Keystone.Agent checkInterval 18000
+
+- name: app config | safari settings
+  tags: [app_config, safari]
+  command: defaults write com.apple.Safari {{ item }}
+  with_items:
+    - AlwaysRestoreSessionAtLaunch -bool true
+    - AlwaysShowFavoritesBarInFullScreen -bool true
+    - AlwaysShowTabBar -bool true
+    - AlwaysShowTabBarInFullScreen -bool true
+    - AutoFillCreditCardData -bool false
+    - AutoFillFromAddressBook -bool false
+    - AutoFillMiscellaneousForms -bool false
+    - AutoFillPasswords -bool false
+    - AutoOpenSafeDownloads -bool false # prevent safe file openings @download
+    - CanPromptForPushNotifications -bool false # kill notification prompts
+    - CommandClickMakesTabs -bool true # command + select link opens in new tab
+    - ConfirmClosingMultiplePages -bool true # warn when closing multiple tabs
+    - DebugSnapshotsUpdatePolicy -int 2 # kill thumbnail cache @Hist/Top Sites
+    - DownloadsPath -string "{{ v_desk }}"
+    - DownloadsPathWasConverted -bool true
+    - ExtensionsEnabled -bool true
+    - FindOnPageMatchesWordStartsOnly -bool false # search via "contains"
+    - HistoryAgeInDaysLimit -int 7
+    - HomePage -string "https://www.google.com" # default home page
+    - IncludeDevelopMenu -bool true # enable the Develop menu
+    - InstallExtensionUpdatesAutomatically -bool true
+    - NewTabBehavior -bool false
+    - NewWindowBehavior -bool false
+    - NSQuitAlwaysKeepsWindows -bool true # reload window tabs after restart
+    - OpenNewTabsInFront -bool false # don't make new tabs active
+    - SavePanelFileFormat -int 1
+    - SendDoNotTrackHTTPHeader -bool true # ask sites not to track
+    - ShowFavoritesBar -bool true # what it says
+    - ShowFullURLInSmartSearchField -bool true # show full URL in address bar
+    - ShowSidebarInNewWindows -bool false
+    - ShowSidebarInTopSites -bool false # hide sidebar in Top Sites
+    - ShowStatusBar -bool true
+    - ShowStatusBarInFullScreen -bool true
+    - SuppressSearchSuggestions -bool true
+    - TabbedBrowsing -bool true # enable tabbed browsing
+    - TabCreationPolicy -int 1 # open pages in tabs
+    - TargetedClicksCreateTabs -bool true # open all "new window" links in tabs
+    - UniversalSearchEnabled -bool false # don't send search queries to Apple
+    - WarnAboutFraudulentWebsites -bool true
+    - WebKitDeveloperExtrasEnabledPreferenceKey -bool true # enable web inspector
+    - WebKitPluginsEnabled -bool true
+    - WebKitHistoryAgeInDaysLimit -int 2 # history age limit
+    - WebKitJavaScriptEnabled -bool true
+    - WebKitJavaScriptCanOpenWindowsAutomatically -bool false
+    - WebKitTabToLinksPreferenceKey -bool true # tab to highlight each item
+    - com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled -bool true
+    - com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaScriptEnabled -bool true
+    - com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaScriptCanOpenWindowsAutomatically -bool false
+    - com.apple.Safari.ContentPageGroupIdentifier.WebKit2PluginsEnabled -bool true
+    - com.apple.Safari.ReadingListFetcher.WebKit2LoadsImagesAutomatically -bool false
+    - com.apple.Safari.ReadingListFetcher.WebKit2LoadsSiteIconsIgnoringImageLoadingPreference -bool true
+    - com.apple.Safari.ReadingListFetcher.WebKit2JavaScriptEnabled -bool false
+    - com.apple.Safari.ReadingListFetcher.WebKit2PluginsEnabled -bool false
+
+- name: app config | textedit settings
+  tags: [app_config, textedit]
+  command: defaults write com.apple.TextEdit {{ item }}
+  with_items:
+    - AddExtensionToNewPlainTextFiles -bool false
+    - ApplePersistence -bool true
+    - CheckSpellingWhileTyping -bool false
+#    - NSFixedPitchFont -string "InconsolataForPowerline-g"
+#    - NSFixedPitchFontSize -int 18
+    - PreserveWhitespace -bool true
+    - RichText -bool false
+    - ShowRuler -bool false
+    - SmartCopyPaste -bool false
+    - TextReplacement -bool false
+
+- name: app config | app config playlist complete
+  tags: [app_config, voice]
+  osx_say: msg="app config playlist is complete" voice={{ v_voice }}

@@ -1,0 +1,284 @@
+# vim:fdm=marker
+---
+
+  ##########################################################
+  #  filename: app.yml	 		                               #
+  #  path:     ~/src/deploy/ansible/osx/osx/tasks/  #
+  #  version:  03/14/2015	  	                             #
+  #  purpose:  app install             	                   #
+  ##########################################################
+
+- name: app | starting app playlist
+  tags: [app, voice]
+  osx_say: msg="starting app playlist" voice={{ v_voice }}
+
+# Brew {{{
+- name: app | brew tap
+  tags: [app, tap, php]
+  homebrew_tap: tap={{ item }} state=present
+  with_items:
+    - homebrew/dupes # https://github.com/Homebrew/homebrew-dupes
+    - homebrew/versions # https://github.com/Homebrew/homebrew-versions
+#    - homebrew/php # https://github.com/Homebrew/homebrew-php
+    - caskroom/cask # https://github.com/caskroom/homebrew-cask
+    - caskroom/versions # https://github.com/caskroom/homebrew-versions
+
+- name: app | brew update & upgrade
+  tags: [app, brew]
+  homebrew: update_homebrew=yes upgrade_all=yes
+
+# - name: app | brew install php56
+#  tags: [app, brew, php]
+#  homebrew: name=php56 state=present
+# https://github.com/Homebrew/homebrew-php
+
+- name: app | brew install git
+  tags: [app, brew]
+  homebrew: name=git state=present
+  # http://git-scm.com
+
+- name: app | brew install htop
+  tags: [app, brew]
+  homebrew: name=htop state=present
+  # http://hisham.hm/htop/
+
+- name: app | brew install bash
+  tags: [app, brew]
+  homebrew: name=bash state=present
+  # http://www.gnu.org/software/bash/
+
+- name: app | brew install python
+  tags: [app, brew]
+  homebrew: name=python state=present
+  # https://www.python.org
+
+- name: app | brew install wget
+  tags: [app, brew]
+  homebrew: name=wget state=present
+  # https://www.gnu.org/software/wget/
+
+- name: app | brew install nmap
+  tags: [app, brew]
+  homebrew: name=nmap state=present
+  # http://nmap.org
+
+- name: app | brew install tmux
+  tags: [app, brew]
+  homebrew: name=tmux state=present
+  # http://tmux.sourceforge.net
+
+- name: app | brew install reattach-to-user-namespace
+  tags: [app, brew]
+  homebrew: name=reattach-to-user-namespace state=present
+  # https://github.com/ChrisJohnsen/tmux-MacOSX-pasteboard
+
+- name: app | brew install netcat
+  tags: [app, brew]
+  homebrew: name=netcat state=present
+  # http://en.wikipedia.org/wiki/Netcat
+
+- name: app | brew install coreutils
+  tags: [app, brew]
+  homebrew: name=coreutils state=present
+  # https://www.gnu.org/software/coreutils/
+
+- name: app | brew install findutils
+  tags: [app, brew, findutils]
+  homebrew: name=findutils state=present
+  #  homebrew: name=findutils state=present install_options=with-default-names
+  # http://www.gnu.org/software/findutils/
+
+- name: app | brew install rsync
+  tags: [app, brew, rsync]
+  homebrew: name=rsync state=present
+  # http://rsync.samba.org
+
+- name: app | brew install fswatch
+  tags: [app, brew]
+  homebrew: name=fswatch state=present
+  # https://github.com/emcrisostomo/fswatch
+
+- name: app | brew install terminal-notifier
+  tags: [app, brew]
+  homebrew: name=terminal-notifier state=present
+  # https://github.com/alloy/terminal-notifier
+
+- name: app | brew install makedepend
+  tags: [app, brew]
+  homebrew: name=makedepend state=present
+  # http://en.wikipedia.org/wiki/Makedepend
+
+- name: app | brew install ctags-exuberant
+  tags: [app, brew]
+  homebrew: name=ctags-exuberant state=present
+  # http://ctags.sourceforge.net
+
+- name: app | brew install tree
+  tags: [app, brew]
+  homebrew: name=tree state=present
+  # http://ctags.sourceforge.net
+
+- name: app | brew install vim
+  tags: [app, brew]
+  homebrew: name=vim state=present
+  # http://www.vim.org
+
+- name: app | brew install cask
+  tags: [app, brew]
+  homebrew: name=brew-cask state=present
+  # https://github.com/caskroom/homebrew-cask
+  # }}}
+
+# Cask {{{
+- name: app | cask install virtualbox
+  tags: [app, cask]
+  homebrew_cask: name=virtualbox state=present
+  # https://www.virtualbox.org
+
+- name: app | cask install vagrant
+  tags: [app, cask]
+  homebrew_cask: name=vagrant state=present
+  # https://www.vagrantup.com
+
+- name: app | cask install vagrant-manager
+  tags: [app, cask]
+  homebrew_cask: name=vagrant-manager state=present
+  # http://vagrantmanager.com
+
+- name: app | cask install google chrome
+  tags: [app, cask]
+  homebrew_cask: name=google-chrome state=present
+  # http://www.google.com/chrome
+
+- name: app | cask install google earth
+  tags: [app, cask]
+  homebrew_cask: name=google-earth state=present
+  # https://www.google.com/earth
+
+- name: app | cask install dropbox
+  tags: [app, cask]
+  homebrew_cask: name=dropbox state=present
+  # https://www.dropbox.com
+
+- name: app | cask install adium
+  tags: [app, cask]
+  homebrew_cask: name=adium state=present
+  # https://adium.im
+
+- name: app | cask install gimp
+  tags: [app, cask]
+  homebrew_cask: name=gimp state=present
+  # http://www.gimp.org
+
+- name: app | cask install xquartz
+  tags: [app, cask]
+  homebrew_cask: name=xquartz state=present
+  # http://xquartz.macosforge.org
+
+- name: app | cask install inkscape
+  tags: [app, cask]
+  homebrew_cask: name=inkscape state=present
+  # https://inkscape.org
+
+- name: app | cask install cakebrew
+  tags: [app, cask]
+  homebrew_cask: name=cakebrew state=present
+  # https://www.cakebrew.com
+
+- name: app | cask install audacity
+  tags: [app, cask]
+  homebrew_cask: name=audacity state=present
+  # http://audacity.sourceforge.net
+
+- name: app | cask install appcleaner
+  tags: [app, cask]
+  homebrew_cask: name=appcleaner state=present
+  # http://appcleaner.onfreedownload.com
+
+- name: app | cask install sequel-pro
+  tags: [app, cask]
+  homebrew_cask: name=sequel-pro state=present
+  # http://www.sequelpro.com
+
+- name: app | cask install keka
+  tags: [app, cask]
+  homebrew_cask: name=keka state=present
+  # http://www.kekaosx.com
+
+- name: app | cask install filezilla
+  tags: [app, cask]
+  homebrew_cask: name=filezilla state=present
+    # https://filezilla-project.org
+
+- name: app | cask install seamonkey
+  tags: [app, cask]
+  homebrew_cask: name=seamonkey state=present
+  # http://www.seamonkey-project.org
+
+- name: app | cask install charles
+  tags: [app, cask]
+  homebrew_cask: name=charles state=present
+  # http://www.charlesproxy.com
+
+- name: app | cask install imagealpha
+  tags: [app, cask]
+  homebrew_cask: name=imagealpha state=present
+  # http://pngmini.com
+
+- name: app | cask install imageoptim
+  tags: [app, cask]
+  homebrew_cask: name=imageoptim state=present
+  # https://imageoptim.com
+
+- name: app | cask install seil
+  tags: [app, cask]
+  homebrew_cask: name=seil state=present
+  # https://pqrs.org/osx/karabiner/seil.html.en
+
+- name: app | cask install disk-inventory-x
+  tags: [app, cask]
+  homebrew_cask: name=disk-inventory-x state=present
+  # https://pqrs.org/osx/karabiner/seil.html.en
+
+# - name: app | cask install libreoffice
+  # tags: [app, cask]
+  # homebrew_cask: name=libreoffice state=present
+  # https://www.libreoffice.org
+
+# - name: app | cask install handbrake
+  # tags: [app, cask]
+  # homebrew_cask: name=handbrake state=present
+  # https://handbrake.fr
+
+# - name: app | cask install burn
+  # tags: [app, cask]
+  # homebrew_cask: name=burn state=present
+  # http://burn-osx.sourceforge.net
+
+- name: app | cask install iterm2
+  tags: [app, cask]
+  homebrew_cask: name=iterm2 state=present
+  # http://iterm2.com
+  # }}}
+
+# Composer {{{
+- name: app | install composer
+  tags: [app, composer]
+  shell: '{{ item }} creates={{ v_composer }}'
+  with_items:
+    - curl -sS https://getcomposer.org/installer | php
+    - sudo mv composer.phar {{ v_composer }}
+  # https://getcomposer.org/doc/00-intro.md#installation-linux-unix-osx
+
+- name: app | composer install drush
+  tags: [app, drush]
+  command: composer {{ item }}
+  with_items:
+    - global require drush/drush:dev-master
+    - global update
+  # http://docs.drush.org/en/master/install/
+  # }}}
+
+- name: app | app playlist complete
+  tags: [app, voice]
+  osx_say: msg="app playlist is complete" voice={{ v_voice }}

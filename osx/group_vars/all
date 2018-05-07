@@ -1,0 +1,10 @@
+---
+#################################################
+#  filename: all	                    		     	#
+#  path:  ~/src/deploy/ansible/osx/group_vars/ 	#
+#  version: 03/14/2015                          #
+#  purpose: group variable for all              #
+#################################################
+
+deploy_user: gp
+deploy_user_jp: JP

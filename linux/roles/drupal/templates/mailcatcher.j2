@@ -1,0 +1,12 @@
+#########################################################################
+#### path:      /etc/init.d/mailcatcher                              ####
+#### purpose:   mailcatcher startup script                           ####
+#### version:   09/05/2014                                           ####
+#########################################################################
+{#######################################################################}
+{#### ansible template: mailcatcher.j2                              ####}
+{#### path:             ~/src/deploy/roles/drupal/templates     ####}
+{#### role:             drupal development                          ####}
+{#######################################################################}
+
+/usr/local/bin/mailcatcher --http-ip {{ m_catch_http_ip }} --http-port {{ m_catch_http_port }}

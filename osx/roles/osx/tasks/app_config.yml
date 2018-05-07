@@ -1,0 +1,252 @@
+# vim:fdm=marker
+---
+
+  ##########################################################
+  #  filename: app_config.yml 		                         #
+  #  path:     ~/src/deploy/ansible/osx/osx/tasks/  #
+  #  version:  03/14/2015                                  #
+  #  purpose:  app config                                  #
+  ##########################################################
+
+- name: app config | starting playlist
+  tags: [app_config, voice]
+  osx_say: msg="app config playlist is starting" voice={{ v_voice }}
+
+- name: app config | update php.ini settings
+  sudo: yes
+  tags: [app_config, php]
+  lineinfile:
+    dest=/usr/local/etc/php/5.6/php.ini
+    state=present
+    regexp=^;?{{ item.key }}
+    insertafter='\[PHP\]'
+    line='{{ item.key }} = {{ item.value }}'
+  with_items:
+    - { key: 'date.timezone',             value: '"{{ v_tz }}"' }
+    - { key: 'display_errors',            value: 'On' }
+    - { key: 'error_reporting',           value: 'E_ALL' }
+
+#################################
+## Vim - Text Editor           ##
+#################################
+- name: app config | create vim backup directories
+  tags: [app_config, vim]
+  file:
+    state=directory
+    path={{ v_home }}.vim/{{ item }}
+  with_items:
+    - tmp/backup
+    - tmp/swap
+    - tmp/undo
+
+- name: app config | create symlinked ssh folder
+  tags: [app_config, ssh, symlink]
+  command: ln -sf ~/work/dotfiles/ssh ~/.ssh
+
+- name: app config | git clone vundle & solarized
+  tags: [app_config, vim]
+  git:
+    repo=git://github.com/{{ item.r }}.git
+    dest={{ v_home }}.vim/bundle/{{ item.d }}
+    accept_hostkey=yes
+  with_items:
+    - { r: 'gmarik/Vundle.vim',                d: 'Vundle.vim' }
+    - { r: 'altercation/vim-colors-solarized', d: 'vim-colors-solarized' }
+
+- name: app config | load vundle plugin manifest
+  tags: [app_config, vim]
+  command: ln -sf ~/work/dotfiles/vimrc_vundle ~/.vimrc
+
+- name: app config | run vundle
+  tags: [app_config, vim]
+  command: vim +PluginInstall +qall creates={{ v_home }}.vim/bundle/ctrlp.vim
+
+#################################
+## Twitter - Social Networking ##
+#################################
+- name: app config | twitter settings
+  tags: [app_config, twitter]
+  command: defaults write com.twitter.twitter-mac {{ item }}
+  with_items:
+    - AutomaticQuoteSubstitutionEnabled -bool false # kill smart quotes
+    - MenuItemBehavior -int 1 # show app via menu bar icon
+    - openLinksInBackground -bool true # open links in background
+    - ESCClosesComposeWindow -bool true # <esc> closed "new tweet"
+    - ShowFullNames -bool true # show full names, not handles
+    - HideInBackground -bool true # hide app to background when not focus
+
+#################################
+## iTerm2 - Terminal           ##
+#################################
+- name: app config | iterm2 settings
+  tags: [app_config, iterm2]
+  command: defaults write com.googlecode.iterm2 {{ item }}
+  with_items:
+    - PinchToChangeFontSizeDisabled -bool true
+
+- name: app config | iterm2 colors
+  tags: [app_config, iterm2]
+  command: open {{ v_work }}settings/iterm2/solarized/{{ item }}
+  with_items:
+    - 'Solarized\ Dark.itermcolors'
+    - 'Solarized\ Light.itermcolors'
+
+- name: app config | iterm2 preferences
+  tags: [app_config, iterm2]
+  copy:
+    src={{ v_work }}settings/iterm2/com.googlecode.iterm2.plist
+    dest={{ v_lib}}Preferences/com.googlecode.iterm2.plist
+    owner={{ v_user }}
+    group={{ v_group }}
+
+- name: app config | bettersnaptool preferences
+  tags: [app_config, bettersnap]
+  copy:
+    src={{ v_work }}settings/bettersnap/{{ item.s }}
+    dest={{ item.d }}
+    owner={{ v_user }}
+    group={{ v_group }}
+  with_items:
+    - { s: 'com.hegenberg.BetterSnapTool.plist', d: '{{ v_pref }}' }
+    - { s: 'storedata',                          d: '{{ v_apsp }}BetterSnapTool/' }
+
+- name: app config | printer presets
+  tags: [app_config, printer]
+  copy:
+    src={{ v_work }}settings/mx712/com.apple.print.custompresets.forprinter.Canon_MX712.plist
+    dest={{ v_lib }}preferences/
+    owner={{ v_user }}
+    group={{ v_group }}
+
+- name: app config | mail settings
+  tags: [app_config, mail]
+  command: defaults write com.apple.mail {{ item }}
+  with_items:
+    - AddressesIncludeNameOnPasteboard -bool false # copy email address w/out name
+    - DraftsViewerAttributes -dict-add "DisplayInThreadedMode" -string "yes" # threaded mode
+    - DraftsViewerAttributes -dict-add "SortOrder" -string "received-date" # sort @date
+    - DraftsViewerAttributes -dict-add "SortedDescending" -string "yes" # oldest @top
+    - SendWindowsFriendlyAttachments -bool true # send Win-friendly attachments
+    - DisableInlineAttachmentViewing -bool yes # show attachments as icons
+
+- name: app config | calendar settings
+  tags: [app_config, calendar]
+  command: defaults write com.apple.iCal {{ item }}
+  with_items:
+    - '"Show Week Numbers" -bool false'
+    - '"n days of week" -int 7' # show 7 days
+    - '"first day of week" -int 1' # start week on monday
+    - '"Show time in Month View" -bool true' # how event times
+
+- name: app config | contact settings
+  tags: [app_config, contacts]
+  command: defaults write com.apple.AddressBook {{ item }}
+  with_items:
+    - ABNameDisplay -int 2 # display first name, then last name
+    - ABNameSortingFormat -string "sortingLastName sortingFirstName" # sort by last name
+
+- name: app config | preview settings
+  tags: [app_config, preview]
+  command: defaults write com.apple.Preview NSQuitAlwaysKeepsWindows -bool false
+
+- name: app config | chrome settings
+  tags: [app_config, chrome]
+  command: defaults write com.google.Keystone.Agent checkInterval 18000
+
+- name: app config | safari settings
+  tags: [app_config, safari]
+  command: defaults write com.apple.Safari {{ item }}
+  with_items:
+    - AlwaysRestoreSessionAtLaunch -bool true
+    - AlwaysShowFavoritesBarInFullScreen -bool true
+    - AlwaysShowTabBar -bool true
+    - AlwaysShowTabBarInFullScreen -bool true
+    - AutoFillCreditCardData -bool false
+    - AutoFillFromAddressBook -bool false
+    - AutoFillMiscellaneousForms -bool false
+    - AutoFillPasswords -bool false
+    - AutoOpenSafeDownloads -bool false # prevent safe file openings @download
+    - CanPromptForPushNotifications -bool false # kill notification prompts
+    - CommandClickMakesTabs -bool true # command + select link opens in new tab
+    - ConfirmClosingMultiplePages -bool true # warn when closing multiple tabs
+    - DebugSnapshotsUpdatePolicy -int 2 # kill thumbnail cache @Hist/Top Sites
+    - DownloadsPath -string "{{ v_desk }}"
+    - DownloadsPathWasConverted -bool true
+    - ExtensionsEnabled -bool true
+    - FindOnPageMatchesWordStartsOnly -bool false # search via "contains"
+    - HistoryAgeInDaysLimit -int 7
+    - HomePage -string "https://www.google.com" # default home page
+    - IncludeDevelopMenu -bool true # enable the Develop menu
+    - InstallExtensionUpdatesAutomatically -bool true
+    - NewTabBehavior -bool false
+    - NewWindowBehavior -bool false
+    - NSQuitAlwaysKeepsWindows -bool true # reload window tabs after restart
+    - OpenNewTabsInFront -bool false # don't make new tabs active
+    - SavePanelFileFormat -int 1
+    - SendDoNotTrackHTTPHeader -bool true # ask sites not to track
+    - ShowFavoritesBar -bool true # what it says
+    - ShowFullURLInSmartSearchField -bool true # show full URL in address bar
+    - ShowSidebarInNewWindows -bool false
+    - ShowSidebarInTopSites -bool false # hide sidebar in Top Sites
+    - ShowStatusBar -bool true
+    - ShowStatusBarInFullScreen -bool true
+    - SuppressSearchSuggestions -bool true
+    - TabbedBrowsing -bool true # enable tabbed browsing
+    - TabCreationPolicy -int 1 # open pages in tabs
+    - TargetedClicksCreateTabs -bool true # open all "new window" links in tabs
+    - UniversalSearchEnabled -bool false # don't send search queries to Apple
+    - WarnAboutFraudulentWebsites -bool true
+    - WebKitDeveloperExtrasEnabledPreferenceKey -bool true # enable web inspector
+    - WebKitPluginsEnabled -bool true
+    - WebKitHistoryAgeInDaysLimit -int 2 # history age limit
+    - WebKitJavaScriptEnabled -bool true
+    - WebKitJavaScriptCanOpenWindowsAutomatically -bool false
+    - WebKitTabToLinksPreferenceKey -bool true # tab to highlight each item
+    - com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled -bool true
+    - com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaScriptEnabled -bool true
+    - com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaScriptCanOpenWindowsAutomatically -bool false
+    - com.apple.Safari.ContentPageGroupIdentifier.WebKit2PluginsEnabled -bool true
+    - com.apple.Safari.ReadingListFetcher.WebKit2LoadsImagesAutomatically -bool false
+    - com.apple.Safari.ReadingListFetcher.WebKit2LoadsSiteIconsIgnoringImageLoadingPreference -bool true
+    - com.apple.Safari.ReadingListFetcher.WebKit2JavaScriptEnabled -bool false
+    - com.apple.Safari.ReadingListFetcher.WebKit2PluginsEnabled -bool false
+
+- name: app config | textedit settings
+  tags: [app_config, textedit]
+  command: defaults write com.apple.TextEdit {{ item }}
+  with_items:
+    - AddExtensionToNewPlainTextFiles -bool false
+    - ApplePersistence -bool true
+    - CheckSpellingWhileTyping -bool false
+    - NSFixedPitchFont -string "InconsolataForPowerline-g"
+    - NSFixedPitchFontSize -int 18
+    - PreserveWhitespace -bool true
+    - RichText -bool false
+    - ShowRuler -bool false
+    - SmartCopyPaste -bool false
+    - TextReplacement -bool false
+
+- name: app config | terminal colors
+  tags: [app_config, terminal]
+  command: open {{ v_work }}settings/terminal/solarized/{{ item }}
+  with_items:
+    - 'Solarized\ Dark\ xterm-256color.terminal'
+    - 'Solarized\ Light\ xterm-256color.terminal'
+
+- name: app config | terminal settings
+  tags: [app_config, terminal]
+  command: defaults write com.apple.terminal {{ item }}
+  with_items:
+    - '"Default Window Settings" -string "swa_solarized_dark"' # loads theme
+    - FocusFollowsMouse -bool true # activate window via mouse move
+    - Shell -string "/bin/bash"
+    - '"Startup Window Settings" -string "swa_solarized_dark"'
+    - StringEncodings -array 4 # only use UTF-8
+
+- name: app config | seil settings
+  tags: [app_config, seil]
+  command: sh {{ v_scr }}seil-import.sh
+
+- name: app config | app config playlist complete
+  tags: [app_config, voice]
+  osx_say: msg="app config playlist is complete" voice={{ v_voice }}

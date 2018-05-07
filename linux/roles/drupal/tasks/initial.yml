@@ -1,0 +1,105 @@
+#########################################################################
+#### filename:  initial.yml                                             ####
+#### path:      ~/src/deploy/roles/drupal/tasks/                 ####
+#### role:      drupal development                                   ####
+#### purpose:   manages user accounts & credentials                  ####
+#### version:   08/06/2014                                           ####
+#########################################################################
+
+---
+- name: Initial | Include private variables protected via Ansible Vault
+  include_vars: private.yml
+  tags: [initial, mariadb, drupal8]
+
+- name: Initial | Starting initial playlist on {{ v_host }}
+  tags: [initial]
+  local_action:
+    osx_say msg="ansible provisioning has started with initial playlist"
+    voice={{ v_voice }}
+
+# create new user, home dir, encrypted password, assign any groups
+- name: Initial | Create user account for {{ v_user }}
+  sudo: yes
+  tags: [initial]
+  user:
+    name={{ v_user }}
+    password={{ v_pass }}
+    shell=/bin/bash
+    state=present
+    groups=www-data
+    append=yes
+
+# allow user to run sudo commands without having to enter password
+# to verify: sudo visudo -f /etc/sudoers.d/<v_user>
+- name: Initial | Add sudoers.d password-less permissons for {{ v_user }}
+  sudo: yes
+  tags: [initial]
+  lineinfile:
+    dest=/etc/sudoers.d/{{ v_user }}
+    state=present
+    create=yes
+    line='{{ v_user }} ALL=(ALL) NOPASSWD:ALL'
+    mode=0440
+    validate='visudo -cf %s'
+
+# copy ssh key & set perms 700: ~/.ssh & 600: ~/.ssh/authorized_keys
+- name: Initial | Add ssh public key for {{ v_user }}
+  sudo: yes
+  tags: [initial]
+  authorized_key:
+    user={{ v_user }}
+    "key={{ lookup('file', v_pubkey) }}"
+    state=present
+
+- name: Initial | Set ansible_ssh_user = {{ v_user }}
+  tags: [initial]
+  set_fact:
+    ansible_ssh_user={{ v_user }}
+    ansible_ssh_private_key_file={{ v_key }}
+
+- name: Initial | Reboot server
+  sudo: yes
+  tags: [initial]
+  command: shutdown -r now
+
+# kludge to prevent hanging due to host key change from prior build
+- name: Initial | Kill known_hosts on {{ lookup('env', 'HOST') }}
+  tags: [initial]
+  local_action: command mv ~/.ssh/known_hosts ~/.ssh/known_hosts.bak
+    
+# wait default (300 sec) for port 22 to open @ host, don't start checking for 10 seconds
+- name: Initial | Wait for ssh port
+  tags: [initial]
+  local_action: wait_for host={{ inventory_hostname }} port=22 state=started delay=10
+
+- name: Initial | Lock root password
+  sudo: yes
+  tags: [initial]
+  command: passwd -dl root
+
+- name: Initial | Kill accounts, respective groups & home directories
+  sudo: yes
+  tags: [initial]
+  user:
+    name={{ item }}
+    state=absent
+    remove=yes
+  with_items:
+    - ubuntu
+    - puppet
+    - vagrant
+
+- name: Initial | Kill sudoers.d permissions
+  sudo: yes
+  tags: [initial]
+  file:
+    path=/etc/sudoers.d/{{ item }}
+    state=absent
+  with_items:
+    - 90-cloud-init-users
+    - vagrant
+
+- name: Initial playlist | All done!
+  tags: [initial]
+  local_action: osx_say msg="initial playlist is complete" voice={{ v_voice }}
+

@@ -1,0 +1,46 @@
+---
+#################################################
+#  filename: localhost	              		     	#
+#  path: ~/src/deploy/ansible/osx/host_vars/  	#
+#  version: 03/14/2015                          #
+#  purpose: host variable for localhost         #
+#################################################
+
+# users
+v_user: "{{ deploy_user }}" # see group_vars/all
+mba_name: waf
+admin_user: "{{ admin }}"
+admin_userRN: "{{ admin_user }}"
+admin_userPass: "{{ admin_pwd }}"
+admin_userHint: 1Pass
+
+# localhost paths
+v_pro: /Users/{{ deploy_user }}/Work/provision/
+v_dot: /Users/{{ deploy_user }}/Work/dotfiles/
+v_scr: /Users/{{ deploy_user }}/Work/scripts/
+v_home: /Users/{{ deploy_user }}/
+v_desk: /Users/{{ deploy_user }}/Desktop/
+v_lib: /Users/{{ deploy_user }}/Library/
+v_pref: /Users/{{ deploy_user }}/Library/Preferences/
+v_apsp: /Users/{{ deploy_user }}/Library/Application\ Support
+v_work: /Users/{{ deploy_user }}/Work/
+v_composer: /usr/local/bin/composer
+
+# iCloud paths
+v_note: '/Users/gp/Library/Mobile\ Documents/N39PJFAFEV~com~metaclassy~byword/Documents/'
+v_gfx: '/Users/{{ deploy_user }}/Library/Mobile\ Documents/3N3RG282KZ~com~indeeo~iDraw/Documents/'
+v_map: '/Users/{{ deploy_user }}/Library/Mobile\ Documents/W6L39UYL6Z\~com\~mindnode\~MindNode/Documents/'
+
+
+# Git
+v_git_user: "Greg Price"
+v_git_mail: Greg@
+v_git_edit: vi
+v_git_push: current
+
+# voices: Trinoids, Zarvox, Cellos, Princess
+v_voice: Princess
+v_group: staff
+
+# misc
+v_tz: America/Denver

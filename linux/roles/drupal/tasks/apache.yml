@@ -1,0 +1,277 @@
+#########################################################################
+##### Apache - Web Server                                            ####
+#########################################################################
+
+- name: Dev | Install Apache web server to {{ v_host }}
+  sudo: yes
+  tags: [dev, apache]
+  apt: pkg={{ item }} state=present
+  with_items:
+    - apache2   # HTTP server metapackage
+    - php5-fpm  # FastCGI process manager
+
+- name: Dev | Ensure apache2 service is started and boot enabled on {{ v_host }}
+  sudo: yes
+  tags: [dev, apache]
+  service: name=apache2 state=started enabled=yes
+
+# equivalent to sudo a2enmod <moduleName>
+- name: Dev | Enable Apache modules on {{ v_host }}
+  sudo: yes
+  tags: [dev, apache]
+  apache2_module: state=present name={{ item }}
+  with_items:
+    - proxy_fcgi  # provides FastCGI support
+    - rewrite     # needed for drupal clean urls
+    - headers     # control and modify HTTP request and response headers
+    - expires     # max-age directives
+
+# equivalent to sudo a2dismod <moduleName>
+- name: Dev | Disable Apache modules on {{ v_host }}
+  sudo: yes
+  tags: [dev, apache]
+  apache2_module: state=absent name={{ item }}
+  with_items:
+    - cgi
+    - negotiation
+    - autoindex
+    - env
+    - reqtimeout
+    - setenvif
+#     - auth_basic # access control via drupal, so kill all auth mods...
+#     - authn_file
+#     - authz_groupfile
+#     - authz_user
+
+- name: Dev | Set PHP-FPM to listen on TCP on {{ v_host }}
+  sudo: yes
+  tags: [dev, apache]
+  lineinfile: 
+    dest=/etc/php5/fpm/pool.d/www.conf
+    regexp=^listen.allowed_clients
+    line='listen.allowed_clients = 192.168.11.11'
+    state=present
+#     regexp=^listen = /var/run/php5-fpm.sock
+#     line='listen = 127.0.0.1:9000'
+
+- name: Dev | Update Apache global config (apache2.conf) on {{ v_host }}
+  sudo: yes
+  tags: [dev, apache]
+  lineinfile:
+    dest=/etc/apache2/apache2.conf
+    state=present
+    regexp=^{{ item.key }}
+    insertafter=EOF
+    line={{ item.key }}" "{{ item.value }}
+  with_items:
+    - { key: 'Timeout',               value: '30' }
+    - { key: 'MaxKeepAliveRequests',  value: '20' }
+    - { key: 'KeepAliveTimeout',      value: '5' }
+
+- name: Dev | Push custom Apache config (extra.conf) to {{ v_host }}
+  sudo: yes
+  tags: [dev, apache]
+  copy:
+    src=extra.conf
+    dest=/etc/apache2/conf-available/extra.conf
+
+- name: Dev | Enable custom Apache config (extra.conf) on {{ v_host }}
+  sudo: yes
+  tags: [dev, apache]
+  command: a2enconf extra.conf
+
+- name: Dev | Disable default Apache vhost on {{ v_host }}
+  sudo: yes
+  tags: [dev, apache]
+  command: a2dissite 000-default.conf
+    
+# g+ws & 2020 = only group can write & group id is preserved for all new files created in the directory
+- name: Dev | Create Apache vhost directories on {{ v_host }}
+  sudo: yes
+  tags: [dev, apache] 
+  file:
+    path=/var/www/{{ v_vhost }}/project
+    state=directory
+    owner={{ v_user }}
+    group=www-data
+    mode=2775
+#   with_items: ["{{ v_vhost }}"]
+    
+- name: Dev | Add Apache vhost on {{ v_host }}
+  sudo: yes
+  tags: [dev, apache]
+  template:
+    src=vhosts.conf.j2
+    dest=/etc/apache2/sites-available/vhosts.conf
+    owner=root
+    group=root
+    mode=644
+
+# creates symlinks in sites-enabled directory
+- name: Dev | Enable Apache vhosts on {{ v_host }}
+  sudo: yes
+  tags: [dev, apache]
+  command: a2ensite vhosts.conf
+
+# created @localhost as kludge for one-way vagrant rsync
+- name: Dev | Create test file to verify AMP install on {{ v_host }}
+  tags: [dev, apache]
+  local_action: shell
+    echo "<h2>{{ v_host }}.dev</h2><p>Apache Works!... <p>\n<?php \necho \"PHP Works!\"; \n\\nphpinfo(); \n?>" | tee ~/work/projects/{{ v_vhost }}/webdev/index.php
+#   shell: echo "<h2>DevOpsEtc.dev</h2><p>Apache Works!... <p>\n<?php \necho \"PHP Works!\"; \n\\nphpinfo(); \n?>" | tee /var/www/{{ v_vhost }}/project/index.php
+
+- name: Dev | Run Apache configtest (apache2ctl) on {{ v_host }}
+  tags: [dev, apache]
+  command: apache2ctl configtest
+  notify:
+    - reload php5-fpm daemon
+    - reload apache2 daemon
+    
+#######################################################################
+##### PHP - Server-Side Scripting                                  ####
+#######################################################################
+
+- name: Dev | Install PHP, dependencies & tools on {{ v_host }}
+  sudo: yes
+  tags: [dev, php]
+  apt: pkg={{ item }} state=present
+  with_items:
+    - php5           # server-side scripting
+    - php5-cli       # command-line interpreter
+    - php5-curl      # php/curl integration
+    - php5-gd        # image manipulation tools
+    - php-pear       # php extention repository
+    - php5-dev       # files for PHP5 module development
+    - build-essential
+    - php5-xdebug    # php debugging and profiling tools
+    - php5-xhprof    # web-based php profiler
+    - libssh2-php    # drupal update downloads via ssh
+
+- name: Dev | Install upload progress indicator (for Drupal) to {{ v_host }}
+  sudo: yes
+  tags: [dev, php]
+  command: pecl install uploadprogress
+  register: pecl_result
+  changed_when: "'already installed' not in pecl_result.stdout"
+  failed_when: "pecl_result.stderr"
+
+- name: Dev | Update PHP.ini settings on {{ v_host }}
+  sudo: yes
+  tags: [dev, php]
+  lineinfile:
+    dest=/etc/php5/fpm/php.ini
+    state=present
+    regexp=^;?{{ item.key }}
+    insertafter=EOF
+    line={{ item.key }}" = "{{ item.value }}
+  with_items:
+    - { key: 'date.timezone',          value: '{{ v_zone }}' }
+    - { key: 'memory_limit',           value: '128M' }
+    - { key: 'upload_max_filesize',    value: '128M' }
+    - { key: 'post_max_size',          value: '128M' }
+    - { key: 'expose_php',             value: 'Off' }
+    - { key: 'display_errors',         value: 'Off' }
+    - { key: 'display_startup_errors', value: 'Off' }
+    - { key: 'log_errors',             value: 'On' }
+    - { key: 'error_log',              value: '/var/log/php_errors.log' }
+    - { key: 'session.cache_limiter',  value: 'nocache' }
+    - { key: 'session.auto_start',     value: '0' }
+    - { key: 'allow_url_fopen',        value: 'Off' }
+    - { key: 'session.name',           value: 'Session' }
+    - { key: 'extension',              value: 'uploadprogress.so' }
+    - { key: 'sendmail_path',          value: '/usr/bin/env\ catchmail\ --ip={{ mailcatcher_ip }}\ --smtp-ip={{ mailcatcher_smtp_ip }}\ --smtp-port={{ mailcatcher_smtp_port }}\ --http-ip={{ mailcatcher_http_ip }}\ --http-port={{ mailcatcher_http_port }}\ -f\ {{ v_git_mail }}' }
+  notify:
+    - reload php5-fpm daemon
+    - reload apache2 daemon
+
+#######################################################################
+##### MariaDB - Relational Database                                ####
+#######################################################################
+
+- name: Dev | Install MariaDB database server and dependencies to {{ v_host }}
+  sudo: yes
+  tags: [dev, mariadb]
+  apt: pkg={{ item }} state=present
+  with_items:
+    - mariadb-server      # database server
+    - python-mysqldb      # database creation via ansible
+    - php5-mysql          # easier php/MySQL integration
+
+- name: Dev | Push my.cnf (global config) to /etc/mysql/ on {{ v_host }} 
+  sudo: yes
+  tags: [dev, mariadb]
+  template:
+    src=my.cnf.global.j2
+    dest={{ mysql_conf_dir }}my.cnf
+    owner=root
+    group=root 
+    mode=0644
+  notify: 
+    - reload php5-fpm daemon
+    - reload apache2 daemon
+    - reload mysql daemon
+
+- name: Dev | Ensure mysql service is started and boot enabled on {{ v_host }}
+  sudo: yes
+  tags: [dev, mariadb]
+  service: name={{ mysql_service }} state=started enabled=yes
+
+- name: Dev | Check if .my.cnf file exists at ~/ on {{ v_host }}
+  tags: [dev, mariadb]
+  stat: "path=~/.my.cnf"
+  register: mycnf
+
+- name: Dev | Update MySQL root password for all root accounts on {{ v_host }}
+  tags: [dev, mariadb]
+  mysql_user: name=root host={{ item }} password={{ mysql_root_db_pass }}
+  with_items:
+   - "{{v_vhost }}"     # root user for 
+   - 127.0.0.1          # root user for localhost without resolved IP for IPv4
+   - ::1                # root user for localhost without resolved IP for IPv6
+   - localhost          # root user for localhost with resolved IP
+  when: mycnf.stat.exists == false
+
+- name: Dev | Push .my.cnf file with root password credentials to {{ v_host }}
+  tags: [dev, mariadb]
+  template: 
+    src=my.cnf.j2
+    dest=~/.my.cnf
+    owner={{ v_user }}
+    group={{ v_user }}
+    mode=0600
+  when: mycnf.stat.exists == false
+  notify: reload mysql daemon
+
+- name: Dev | Kill anonymous MySQL user for localhost on {{ v_host }}
+  tags: [dev, mariadb]
+  mysql_user: name="" host={{ item }} state=absent
+  with_items:
+   - localhost
+   - "{{ v_ip }}"
+  when: mycnf.stat.exists == false
+
+- name: Dev | Kill MySQL test database on {{ v_host }}
+  tags: [dev, mariadb]
+  mysql_db: name=test state=absent
+  when: mycnf.stat.exists == false
+ 
+- name: Dev | Create new MySQL database(s) on {{ v_host }}
+  tags: [dev, mariadb]
+  mysql_db: name={{ item }} state=present
+  with_items: mysql_db
+  when: mysql_db|lower() != 'none'
+
+- name: Dev | Create new MySQL user(s) on {{ v_host }}
+  tags: [dev, mariadb]
+  mysql_user:
+    name={{ item.name }}
+    password={{ item.pass }}
+    host={{ item.host }}
+    priv={{ item.priv}}
+    state=present
+  with_items:
+    - { name: '{{ v_db_user }}', pass: 'v_db_user_pass', host: '{{ v_vhost }}', priv: '*.*:ALL,GRANT' }
+
+- name: Dev | All done!
+  tags: [dev]
+  local_action: osx_say msg="dev playlist is complete" voice={{ v_voice }}

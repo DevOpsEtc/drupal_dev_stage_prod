@@ -1,0 +1,17 @@
+#########################################################################
+#### filename:  site.yml                                             ####
+#### path:      ~/src/deploy/ansible/linux/                   ####
+#### role:      drupal development                                   ####
+#### purpose:   install web server, server-side scripting & database ####
+#### version:   2/11/14                                              ####
+#########################################################################
+
+---
+
+- name: configure & deploy drupal dev environment
+  hosts: drupal
+  remote_user: vagrant
+#   sudo: True
+  gather_facts: False
+  roles:
+    - drupal

@@ -1,0 +1,33 @@
+---
+#################################################
+#  filename: localhost	              		     	#
+#  path: ~/.provision/playbook/host_vars/  	#
+#  version: 04/05/2015                          #
+#  purpose: host variable for localhost         #
+#################################################
+
+# users
+v_user: "{{ deploy_user_jp }}" # see group_vars/all
+mba_name: MBP
+admin_user: "{{ admin }}"
+admin_userRN: "{{ admin_user }}"
+admin_userPass: "{{ admin_pwd }}"
+admin_userHint: 1Pass
+
+# localhost paths
+v_pro: /Users/{{ deploy_user_jp }}/.provision/
+v_dot: /Users/{{ deploy_user_jp }}/.provision/dotfiles/
+v_home: /Users/{{ deploy_user_jp }}/
+v_desk: /Users/{{ deploy_user_jp }}/Desktop/
+v_lib: /Users/{{ deploy_user_jp }}/Library/
+v_pref: /Users/{{ deploy_user_jp }}/Library/Preferences/
+v_apsp: /Users/{{ deploy_user_jp }}/Library/Application\ Support
+
+# iCloud paths
+
+# voices: Trinoids, Zarvox, Cellos, Princess
+v_voice: Princess
+v_group: staff
+
+# misc
+v_tz: America/Denver

@@ -1,0 +1,175 @@
+#########################################################################
+#### filename:  main.yml                                             ####
+#### path:      ~/src/deploy/ansible/linux/roles/drupal/vars/ ####
+#### role:      drupal development                                   ####
+#### purpose:   role variables automatically imported                ####
+#### version:   09/09/2014                                           ####
+#########################################################################
+
+---
+
+# provisioning role
+v_role: drupal
+
+# vagrant project name
+v_project: devopsetc
+
+# voices: Trinoids, Zarvox, Cellos, Princess
+v_voice: Princess
+
+# remotehost time zone
+v_zone: America/Denver
+
+# defaults file for timezone
+timezone: UTC
+
+# remotehost user
+v_user: greg
+
+# remotehost user password
+#   - to create new password hash on mac:
+#   - python -c "from passlib.hash import sha512_crypt; print sha512_crypt.encrypt('<pwd>')"
+#   - replace value inside of single quotes
+v_pass: $6$rounds=100000$YFfpiQXbfhIRS8I/$fm.Iz/lpbFKgC3EI0PlMdjZGH6IWP7kgAftCYll2.Sbj8x3rFsgbm3lKtPG5qIszAnyD39jZq89KNd./4jS1c1
+
+# remotehost ip address
+v_ip: 192.168.11.11
+
+# remotehost private key
+v_key: ~/.ssh/swa
+
+# remotehost public key
+v_pubkey: ~/.ssh/swa.pub
+
+# remotehost ssh port
+v_ssh_port: 5280
+
+# remotehost hostname
+v_host: DevOpsEtc
+
+# ~/.ssh/config alias
+v_ssh_alias: wk
+
+# remotehost user home directory
+v_home: /home/{{ v_user }}/
+
+# localhost paths
+v_pro: ~/src/deploy/
+v_dot: ~/work/dotfiles/
+v_scr: ~/work/scripts/
+v_ses: ~/work/sessions/
+
+# Fail2ban: "ignoreip" can be an IP address, a CIDR mask or a DNS host
+fail2ban_config_ignoreip: 127.0.0.0/8 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+fail2ban_config_bantime: 600
+fail2ban_config_maxretry: 4
+fail2ban_config_destemail:
+
+# Fail2ban: Jails
+fail2ban_config_jail_ssh_enabled: yes
+fail2ban_config_jail_sshddos_enabled: yes
+
+# Git
+v_git_user: "Greg"
+v_git_mail:
+v_git_edit: vi
+v_git_push: current
+
+# Mailcatcher
+m_catch_smtp_ip: 127.0.0.1      # ip address of guest smtp
+m_catch_smtp_port: 1025         # port of guest smtp
+m_catch_http_ip: "{{ v_ip }}"   # ip address of guest http server
+m_catch_http_port: 1082         # port of guest http server
+
+# Nginx
+nginx_user: "nginx"
+nginx_worker_processes: "1"
+nginx_worker_connections: "8192"
+nginx_client_max_body_size: "64m"
+nginx_keepalive_timeout: "65"
+
+# Apache
+v_vhost: "{{ v_project }}"
+v_docroot: /var/www/{{ v_vhost }}/public
+apache_listen_port: 80
+
+# MariaDB
+mysql_service: mysql
+mysql_conf_dir: "/etc/mysql/"
+mysql_port: 3306
+mysql_bind_address: "{{ v_ip }}"
+mysql_db: "{{ v_vhost }}"
+mysql_db_id: 20
+# # mysql variables, see: https://github.com/geerlingguy/ansible-role-mysql
+# mysql_user_home: "{{ v_home }}"
+# mysql_port: "5281"
+# mysql_datadir: /var/lib/mysql
+# mysql_socket: /var/lib/mysql/mysql.sock
+#
+# # Memory settings (default values optimized ~512MB RAM)
+# mysql_key_buffer_size: "256M"
+# mysql_max_allowed_packet: "1M"
+# mysql_table_open_cache: "256"
+# mysql_sort_buffer_size: "1M"
+# mysql_read_buffer_size: "1M"
+# mysql_read_rnd_buffer_size: "4M"
+# mysql_myisam_sort_buffer_size: "64M"
+# mysql_thread_cache_size: "8"
+# mysql_query_cache_size: "16M"
+#
+# # Other settings.
+# mysql_wait_timeout: 28800
+# mysql_max_allowed_packet: "64M"
+#
+# # Try number of CPU's * 2 for thread_concurrency.
+# mysql_thread_concurrency: 2
+#
+# # InnoDB settings.
+# # Set .._buffer_pool_size up to 80% of RAM but beware of setting too high.
+# mysql_innodb_file_per_table: "1"
+# mysql_innodb_buffer_pool_size: "256M"
+# mysql_innodb_additional_mem_pool_size: "20M"
+# # Set .._log_file_size to 25% of buffer pool size.
+# mysql_innodb_log_file_size: "64M"
+# mysql_innodb_log_buffer_size: "8M"
+# mysql_innodb_flush_log_at_trx_commit: "1"
+# mysql_innodb_lock_wait_timeout: 50
+#
+# # mysqldump settings
+# mysql_mysqldump_max_allowed_packet: "64M"
+
+# composer
+composer_path: /usr/local/bin/composer
+
+# drush
+drush_install_path: /usr/local/share/drush
+drush_path: /usr/local/bin/drush
+drush_version: dev-master
+
+# drupal
+drup_user: "{{ v_user }}"
+# drup_pass: 1234
+# drup_pass: '$6$rounds=100000$TEWdVJOioGm5NPVL$OLlRUW7n52qjVGVB0Y7SGwhU0J4PpUwsAm0HINZjJ8sCVMCqmSn4WZVv2kLmVzErBwY.QuCarpSqcPRXAwSNJ0'
+drup_mail: "{{ v_user }}@{{ drup_domain }}"
+
+
+# The core version you want to use (e.g. 6.x, 7.x, 8.0.x).
+drup_core_version: "8.0.x"
+
+# The path where Drupal will be downloaded and installed.
+drup_install_path: "{{ v_docroot }}"
+drup_install_path_local: /Users/GP/Work/projects/{{ v_vhost }}/www/public
+
+drup_core_path: "{{ v_docroot }}/sites/default"
+
+# Your drupal site's domain name (e.g. 'example.com').
+drup_domain: "{{ v_vhost }}.dev"
+
+drup_site_name: Shiny\ Web\ App
+drup_site_mail: "admin@{{ drup_domain }}"
+# The webserver you're running (e.g. 'apache2', 'httpd', 'nginx').
+drup_webserver_daemon: nginx
+
+# Drupal MySQL database username and password.
+drup_db_user: "{{ v_user }}"
+drup_db_nm: drupal

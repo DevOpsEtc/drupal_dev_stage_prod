@@ -1,0 +1,100 @@
+# vim:fdm=marker
+
+  #######################################
+  ##   filename: .bashrc               ##
+  ##   path:     ~/                    ##
+  ##   purpose:  bash shell settings   ##
+  ##   version:  03/20/2015            ##
+  ##   author:   gp                    ##
+  #######################################
+
+# Variables {{{
+export EDITOR=vim                           # use vim as text editor
+export VISUAL=vim                           # use vim in visudo & crontab
+export HISTFILE=$HOME/.bash_hist            # path to bash command history
+export HISTSIZE=100000                      # current session commands to save
+export HISTFILESIZE=100000                  # max commands in history
+export HISTTIMEFORMAT='%D %T '              # prefix timestamp on history list
+export HISTCONTROL=ignoredups:erasedups     # kill sequential dup commands
+                                            # ↓ exclude from command history
+export HISTIGNORE='&:?:??:clear:htop:ls -ahl:man:exit:history:editenv:pwd'
+export CLICOLOR=1                           # colorize ls output
+export GREP_OPTIONS='--color=always'        # colorize grep matches
+export TERM=xterm-256color                  # enable 256 color support
+tB=$(tput bold)                             # set text bold
+export rs=$(tput sgr0)                      # reset text attributes
+export blue=$(tput setaf 33)                # set text blue
+export blueB=${tB}$(tput setaf 33)          # set text bold & blue
+export redB=${tB}$(tput setaf 160)          # set text bold & red
+export yellowB=${tB}$(tput setaf 136)       # set text bold & yellow
+export green=$(tput setaf 64)               # set text green
+export greenB=${tB}$(tput setaf 64)         # set text bold & green
+p1='\n\[$blue\]\u@\h \w/ '                  # prompt: user@hostname $PWD
+p2='\[$redB\]❯\[$yellowB\]❯\[$greenB\]❯'    # prompt: unicode symbols
+p3='$([ \j -gt 0 ] && echo \[$blue\] [\j])' # prompt: number of background jobs
+export PS1="$p1$p2$p3 \[$rs\]"              # build prompt using $p1, $p2 & $p3
+p_brw=/usr/local/bin:/usr/local/sbin      # path to installed apps: homebrew
+c1=--appdir=/Applications                 # path to symlinked apps: brew cask
+txt=$blueB                                # store color value: bold & blue
+p_ply=$HOME/.provision/playbook       	  # path to ansible assets
+p_inv=$p_ply/inventory                    # path to ansible inventory
+p_pbk=$p_ply/playbook.yml                 # path to main playbook
+c_ap="ansible-playbook -i $p_inv $p_pbk"  # playbook command & options
+c_ap2=--ask-vault-pass                    # playbook vault option
+p_vl=$p_ply/vars/_private/vault_local.yml          # path to /private/vault_local.yml
+export LSCOLORS=ExCxxxdxBxxxxdaxaxGxGh    # directory listing colors
+export PATH="$p_brw:$PATH"  		  # prepend to $PATH statement
+export HOMEBREW_CASK_OPTS="$c1"           # brew cask install options
+# }}}
+
+backup() {
+  # purpose: make backup copy of directory or file w/ appended date
+  # usage: $ bak [directory or file]
+  cp $1{,.bak$(date +"_%m-%d-%y_%H:%M")};
+}
+
+# Main {{{
+[ -z "$PS1" ] && return                     # no load if not interactive
+
+alias ..='cd ..'                            # cd up 1 level
+alias ...='cd ../..'                        # cd up 2 levels
+alias ....='cd ../../..'                    # cd up 3 levels
+alias .....='cd ../../../..'                # cd up 4 levels
+alias l='ls -AF'                            # list all except . & ..; append /
+                                            # ↓ long list w/ octal perms
+alias ll="ls -AlhF|awk '{k=0;s=0;for(i=0;i<=8;i++){;k+=((substr(\$1,i+2,1)~/[rwxst]/)*2^(8-i));};j=4;for(i=4;i<=10;i+=3){;s+=((substr(\$1,i,1)~/[stST]/)*j);j/=2;};if(k){;printf(\"%0o%0o \",s,k);};print;}'"
+alias lz='ls -AlShr'                        # sort by size (largest @bottom)
+alias lt='ls -Altr'                         # sort by date (latest @bottom)
+alias lc='ls -Altcr'                        # sort by and show change time
+alias la='ls -Altur'                        # sort by and show access time
+alias ld='ls -dA */'                        # ls only dirs
+alias l.='ls -dAFh .[^.]*'                  # ls only dotfiles
+alias mv='mv -i'                            # move; confirm
+alias rm='rm -i'                            # delete; confirm
+alias cp='cp -i'                            # copy; confirm
+alias bak='backup'                          # backup(); [dir/file]
+alias c='clear'                             # clear screen
+alias h='history'                           # list command history
+alias hg='history | grep'                   # search history [command][*]
+alias ping='ping -c3'                       # limit ping to 3 attempts
+alias R='. $HOME/.bashrc'                   # reload bash
+alias avl='ansible-vault edit $p_vl'      # decrypt & edit /private/vault_local.yml
+alias ave='ansible-vault encrypt'         # add file encryption [path/file]
+alias avd='ansible-vault decrypt'         # remove file encryption [path/file]
+alias apl='$c_ap -l local -K $c_ap2 -vvv' # run playbook host-limited: local
+alias aal='ansible -i $p_inv local -a'    # run adhoc command: local [command]
+alias aaP='ansible -i $p_inv all -m ping' # run adhoc ping: all
+alias log='ls -a $HOME/.logs/'            # list log files
+alias ver='sw_vers'                       # check osx version
+alias perm='stat -f %Mp%Lp'               # octal perms; [dir/file]
+
+umask 002                                   # set default perms @dir/files
+cd                                          # reset working directory to $HOME
+set -o noclobber                            # no redirect overwrite; override >|
+shopt -s cmdhist                            # combine multiline history commands
+shopt -s histappend                         # append history; no clobber
+                                            # ↓ save & reload after each command
+export PROMPT_COMMAND="history -a; history -n"
+                                            # ↓ live xterm title: user@host:$PWD
+PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+# }}}

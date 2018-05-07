@@ -1,0 +1,112 @@
+#########################################################################
+#### filename:  final.yml                                            ####
+#### path:      ~/src/deploy/roles/drupal/tasks/                 ####
+#### role:      drupal development                                   ####
+#### purpose:   tidy up                                              ####
+#### version:   08/19/2014                                           ####
+#########################################################################
+
+---
+
+- name: Final | Starting final playlist on {{ lookup('env', 'HOST') }}
+  tags: [final]
+  local_action: osx_say msg="final playlist is starting" voice={{ v_voice }}
+
+- name: Final | Check if ansible_hosts_post file already exists on {{ lookup('env', 'HOST') }}
+  tags: [final]
+  local_action: stat path=~/src/deploy/ansible_hosts_post
+  register: ansible_hosts_post
+
+# create post-provision inventory file for ansible ad-hoc commands
+- name: Final | Create ansible hosts (post-provision) on {{ lookup('env', 'HOST') }}
+  tags: [final]
+  local_action: lineinfile
+    dest=~/src/deploy/ansible_hosts_post
+    create=True
+    state=present
+    line={{ item }}
+  with_items:
+    - '\[{{ v_role }}\]'
+    - '"{{ v_ip }} ansible_ssh_user={{ v_user }} ansible_ssh_port={{ v_ssh_port }} ansible_ssh_private_key_file={{ v_key }}"'
+  when: ansible_hosts_post.stat.exists == false
+
+- name: Final | Create ssh client config & add alias on {{ lookup('env', 'HOST') }}
+  tags: [final]
+  local_action: lineinfile
+    dest=~/.ssh/config
+    create=True
+    state=present
+    line={{ item.key }}" "{{ item.value }}
+    #  regexp='{{ item.key }}'
+  with_items:
+    - { key: 'Host',                value: '*' }
+    - { key: 'ServerAliveInterval', value: '120' }
+    - { key: 'ServerAliveCountMax', value: '30' }
+    - { key: '',                    value: '' }
+    - { key: 'Host',                value: '{{ v_ssh_alias }}' }
+    - { key: 'HostName',            value: '{{ v_ip }}' }
+    - { key: 'Port',                value: '{{ v_ssh_port }}' }
+    - { key: 'User',                value: '{{ v_user }}' }
+    - { key: 'IdentityFile',        value: '{{ v_key }}' }
+
+- name: Final | Add remotehost entries to hosts on {{ lookup('env', 'HOST') }}
+  sudo: yes
+  tags: [final]
+  local_action: lineinfile
+    dest=/etc/hosts
+    line={{ item.key }}"   "{{ item.value }}
+    state=present
+    #  regexp='{{ item.key }}'
+  with_items:
+    - { key: '{{ v_ip }}', value: 'www.{{ v_vhost }}.dev' }
+    - { key: '{{ v_ip }}', value: '{{ v_vhost }}.dev' }
+
+- name: Final | Modify Vagrantfile with post-provision settings for {{ v_host }}
+  tags: [final, mod]
+  local_action: lineinfile
+    dest=/Users/GP/Work/projects/{{ v_project }}/box/Vagrantfile
+    state=present
+    line="  "{{ item }}
+    regexp=^\s+|#?{{ item }}
+  with_items:
+    - '"config.ssh.username = \"{{ v_user }}\""'
+    - '"config.ssh.private_key_path = \"{{ v_key }}\""'
+    - '"config.ssh.port = \"{{ v_ssh_port }}\""'
+    - '"config.vm.network \"forwarded_port\", guest: 22, host: 2222, id: \"ssh\", disabled: \"true\""'
+    - '"config.vm.network \"forwarded_port\", guest: {{ v_ssh_port }}, host: {{ v_ssh_port }}"'
+  # needed for vagrant commands to work post-provision
+  # before a vagrant destroy & vagrant up, need to run playbook --tags 'reset'
+
+- name: Final | Check if reboot is required on {{ v_host }}
+  tags: [final, reboot]
+  stat: path=/var/run/reboot-required
+  register: reboot_required
+
+- name: Final | Rebooting {{ v_host }}
+  sudo: yes
+  tags: [final, reboot]
+  command: shutdown -r now
+  when: reboot_required.stat.exists == true
+
+- name: Final | Waiting for ssh port on {{ v_host }}
+  tags: [final, reboot]
+  local_action:
+    wait_for host={{ inventory_hostname }}
+    port={{ v_ssh_port }}
+    state=started
+    delay=10
+
+- name: Final | All done!
+  tags: [final]
+  local_action: osx_say
+    msg="{{ item }}"
+    voice={{ v_voice }}
+  with_items:
+    - final playlist is complete
+    - no more playlists to process
+    - "{{v_host}} is ready to roll"
+
+# - name: Final | Run vagrant rsync-auto in background and eat output
+#   tags: [final]
+#   local_action: shell osascript -e 'tell application "Terminal" to activate' -e 'tell application "System Events" to tell process "Terminal" to keystroke "t" using command down' -e 'tell application "Terminal" to do script "cd /Users/GP/Work/projects/devopsetc/box" in selected tab of the front window' -e 'tell application "Terminal" to do script "vagrant rsync-auto > /dev/null & ssh wk && fg" in selected tab of the front window'
+

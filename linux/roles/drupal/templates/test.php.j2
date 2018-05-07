@@ -1,0 +1,101 @@
+<?php /*
+#########################################################################
+#### filename:  test.php.j2                                          ####
+#### path:      ~/src/deploy/roles/drupal/templates              ####
+#### role:      drupal development                                   ####
+#### purpose:   test EMP installation and configuration              ####
+#### version:   07/28/2014                                           ####
+#########################################################################
+*/ ?>
+
+<html>
+<head>
+<title>{{ v_host }}.Dev Test</title>
+  <style>
+    .header{background-color:#000; color:#FFF; font-weight:200;}
+    .odd{background-color:#ccc;}
+    .even{background-color:#F5F5F5;}
+  </style>
+</head>
+<body>
+<br />
+<h1><p align="center"><font color="red">Nginx, PHP-FPM & MariaDB are ready to roll!</font></p></h1>
+
+<h3><p align="center">MariaDB Databases:</p></h3>
+
+<?php
+// Set variables
+$row_num = 1;
+$c = true;
+
+// Load database connection config
+$config = parse_ini_file('/home/{{ v_user }}/.my.cnf');
+
+// Connect to database
+$mysqli_1 = new mysqli($config['host'],$config['user'],$config['password']);
+
+// Output any connection error
+if ($mysqli_1->connect_error) {
+    die('Error : ('. $mysqli_1->connect_errno .') '. $mysqli_1->connect_error);
+}
+
+// MySqli Select Query
+$results_1 = $mysqli_1->query("SHOW DATABASES");
+print '<table border="1" align="center">';
+print '<tr class="header"><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td>Database:</td></tr>';
+while ($record = mysqli_fetch_array($results_1, MYSQLI_NUM)) {
+//echo $record[0], "<br>\r\n";
+    print '<tr'.(($c = !$c)?' class="odd"':' class="even"').">"; 
+    print '<td>'.$row_num ++.'</td>';
+    print '<td>'.$record[0].'</td>';
+    print '</tr>';
+}  
+print '</table>';
+
+// Free memory
+mysqli_free_result($results_1);
+
+// Close connection 
+mysqli_close($mysqli_1);
+?>
+
+<h3><p align="center">MariaDB Database Users:</p></h3>
+
+<?php
+// Set variables
+$row_num = 1;
+$c = true;
+
+// Connect to database
+//$mysqli_2 = new mysqli('host','user','password','database');
+$mysqli_2 = new mysqli($config['host'],$config['user'],$config['password'],$config['dbname']);
+// Output any connection error
+if ($mysqli_2->connect_error) {
+    die('Error : ('. $mysqli_2->connect_errno .') '. $mysqli_2->connect_error);
+}
+
+//MySqli Select Query
+$results_2 = $mysqli_2->query("SELECT Host, User, Password FROM user");
+print '<table border="1" align="center">';
+print '<tr class="header"><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td>Host:</td><td>User:</td><td>Password:</td></tr>';
+while($row = $results_2->fetch_array()) {
+    print '<tr'.(($c = !$c)?' class="odd"':' class="even"').">"; 
+    print '<td>'.$row_num ++.'</td>';
+    print '<td>'.$row["Host"].'</td>';
+    print '<td>'.$row["User"].'</td>';
+    print '<td>'.$row["Password"].'</td>';
+    print '</tr>';
+}  
+print '</table>';
+
+// Free memory
+mysqli_free_result($results_2);
+
+// Close connection 
+mysqli_close($mysqli_2);
+?>
+
+<h3><p align="center">PHPinfo: </p></h3>
+<?php phpinfo(); ?>
+</body>
+</html>

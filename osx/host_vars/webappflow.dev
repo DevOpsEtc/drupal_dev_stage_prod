@@ -1,0 +1,18 @@
+---
+#################################################
+#  filename: devopsetc.dev	 	   	#
+#  path: ~/src/deploy/ansible/osx/host_vars/  	#
+#  version: 03/10/2015                          #
+#  purpose: host variable for devopsetc.dev    #
+#################################################
+
+# conditionally load encrypted vault variables
+# - include_vars: devopsetc.dev_vault
+  # when: inventory_hostname == "devopsetc.dev" and ansible_os_family == "Debian"
+
+drupal_domain: "devopsetc.dev"
+security_ssh_port: 22
+ansible_ssh_port: "{{ security_ssh_port }}"
+ansible_ssh_user: "{{ deploy_user }}"
+ansible_ssh_private_key_file: '~/.ssh/ikon'
+vagrant: yes

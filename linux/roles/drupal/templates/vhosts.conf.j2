@@ -1,0 +1,26 @@
+#######################################################################
+#### filename:  {{ v_vhost }}.conf                           		   ####
+#### path:      /etc/apache2/sites-available/{{ v_vhost }}.conf		 ####
+#### role:      drupal development                                 ####
+#### purpose:   virtual host configuration  		 						    	 ####
+#### version:   07/21/2014                                    		 ####
+#### notes:   enable: sudo a2ensite {{ v_vhost }}.conf      			 ####
+#### notes:   disable: sudo a2dissite {{ v_vhost }}.conf    	 		 ####
+#######################################################################
+
+<VirtualHost {{ v_ip }}:{{ apache_listen_port }}>
+
+  ServerAdmin {{ v_user }}@{{ v_vhost }}.dev
+  ServerName www.{{ v_vhost }}.dev
+  ServerAlias {{ v_vhost }}.dev
+
+  DirectoryIndex index.php index.html 
+  DocumentRoot {{ v_docroot }}
+
+  LogLevel warn
+  ErrorLog /var/log/apache2/{{ v_vhost }}_error.log
+  CustomLog /var/log/apache2/{{ v_vhost }}_access.log combined
+  
+  ProxyPassMatch ^/(.*\.php(/.*)?)$ fcgi://127.0.0.1:9000/var/www/{{ v_vhost }}/project/$1
+
+</VirtualHost>

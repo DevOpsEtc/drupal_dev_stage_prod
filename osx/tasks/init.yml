@@ -1,0 +1,23 @@
+---
+- name: Update apt cache if needed.
+  apt: update_cache=yes cache_valid_time=3600
+
+- name: Get software for Python-based control.
+  apt: "pkg={{ item }} state=installed"
+  with_items:
+  - curl
+  - python-apt
+  - python-pycurl
+
+- name: Add ondrej repository for later versions of PHP.
+  # Note: Remove '-oldstable' for PHP 5.5.x.
+  apt_repository: repo='ppa:ondrej/php5-oldstable'
+
+- name: Set permissions on /var/www.
+  file: >
+    path=/var/www
+    state=directory
+    group=admin
+    mode=775
+    recurse=yes
+  when: not vagrant

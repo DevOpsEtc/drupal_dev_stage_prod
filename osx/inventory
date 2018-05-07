@@ -1,0 +1,27 @@
+[local]
+localhost ansible_connection=local
+
+[local_jp]
+localhost_jp ansible_connection=local
+
+[dev]
+devopsetc.dev ansible_ssh_host=10.1.2.3 ansible_ssh_port=5280 ansible_ssh_private_key_file=~/.ssh/waf_dev
+
+[stage]
+stage.devopsetc.com ansible_ssh_host=0.0.0.0 ansible_ssh_port=0000 ansible_ssh_private_key_file=~/.ssh/waf_stage
+
+[prod]
+devopsetc.com ansible_ssh_host=0.0.0.0 ansible_ssh_port=0000 ansible_ssh_private_key_file=~/.ssh/waf_prod
+
+[no_remote:children]
+local
+dev
+
+[servers:children]
+dev
+stage
+prod
+
+[droplets:children]
+stage
+prod

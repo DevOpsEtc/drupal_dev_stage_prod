@@ -1,0 +1,255 @@
+#########################################################################
+#### filename:  tool.yml                                             ####
+#### path:      ~/src/deploy/roles/drupal/tasks/                 ####
+#### role:      drupal development                                   ####
+#### purpose:   install & configure tools                            ####
+#### version:   07/07/2014                                           ####
+#########################################################################
+
+---
+
+- name: Tool | Starting tool playlist on {{ v_host }}
+  tags: tool
+  local_action: osx_say msg="tool playlist is starting and may take a while" voice={{ v_voice }}
+
+#########################################################################
+#### Scripts                                                         ####
+#########################################################################
+
+# - name: Tool | Push scripts to {{ v_host }}
+#   tags: [tool, script]
+#   copy:
+#     src={{ item.src }}
+#     dest={{ v_home }}{{ item.dest }}
+#   with_items:
+    #- { src: '{{ v_scr }}colors.sh',     dest: 'bin/' }
+
+#########################################################################
+#### APT - Advanced Packaging Tool                                   ####
+#########################################################################
+
+- name: Tool | Kill unneeded packages on {{ v_host }}
+  sudo: yes
+  tags: [tool, apt]
+  apt:
+    pkg={{ item }}
+    state=absent
+    force=yes
+    purge=yes
+  with_items:
+    - puppet
+    - chef
+    - cloud-init
+#     - vim
+
+- name: Tool | Kill related dependencies on {{ v_host }}
+  sudo: yes
+  tags: [tool, apt]
+  command: apt-get autoremove -y
+
+- name: Tool | Kill related directories on {{ v_host }}
+  sudo: yes
+  tags: [tool, apt]
+  file: path={{ item }} state=absent
+  with_items:
+    - /etc/cloud
+    - /var/lib/cloud
+# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=705752#19
+# can probably kill this now!!
+
+# avoid apt-get syntax error: unknown user in statoverride file
+- name: Tool | Kill related lines in statoverride on {{ v_host }}
+  sudo: yes
+  tags: [tool, apt]
+  command: sudo sed -i '/puppet/d' /var/lib/dpkg/statoverride
+#   file: path=/var/lib/dpkg/statoverride state=absent
+
+# equivalent to sudo apt-get update
+- name: Tool | Update package list on {{ v_host }}
+  sudo: yes
+  tags: [tool, apt]
+  apt: update_cache=yes cache_valid_time=3600
+
+# equivalent to sudo apt-get dist-upgrade
+- name: Tool | Update installed tools & mind dependencies on {{ v_host }}
+  sudo: yes
+  tags: [tool, apt]
+  apt: upgrade=dist
+
+- name: Tool | Install misc tools on {{ v_host }}
+  sudo: yes
+  tags: [tool, apt]
+  apt: pkg={{ item }} state=latest
+  with_items:
+    - htop                      # interactive process viewer
+    - munin                     # web-based resource monitoring tool
+    - exuberant-ctags           # tag generator
+#     - nfs-kernel-server         # nfs file syncing support
+
+#########################################################################
+#### Mailcatcher - SMTP Mail Server & Catcher                        ####
+#########################################################################
+
+- name: Tool | Install Mailcatcher dependencies on {{ v_host }}
+  sudo: yes
+  tags: [tool, mailcatcher]
+  apt: pkg={{ item }} state=latest
+  with_items:
+    - g++
+    - libsqlite3-dev  # SQLite 3 development files
+    - ruby1.9.1       # headers for ruby gems
+    - ruby1.9.1-dev   # ruby gem packaging
+#     - ruby2.0
+#     - ruby2.0-dev
+#       - sqlite3         # lightweight relational database
+
+- name: Tool | Create symlink to Ruby on {{ v_host }}
+  sudo: yes
+  tags: [tool, mailcatcher]
+  file: src=/usr/bin/ruby1.9.1 dest=/usr/local/bin/ruby state=link
+
+- name: Tool | Create symlink to Ruby Gems on {{ v_host }}
+  sudo: yes
+  tags: [tool, mailcatcher]
+  file: src=/usr/bin/gem1.9.1 dest=/usr/local/bin/gem state=link
+
+- name: Tool | Install Mailcatcher on {{ v_host }}
+  sudo: yes
+  tags: [tool, mailcatcher]
+  gem:
+    name=mailcatcher
+    state=latest
+    user_install=no
+
+- name: Tool | Create startup script for mailcatcher on {{ v_host }}
+  sudo: yes
+  tags: [tool, mailcatcher]
+  template:
+    src=mailcatcher.j2
+    dest=/etc/init.d/mailcatcher
+    mode=0755
+
+- name: Tool | Start Mailcatcher upon boot on {{ v_host }}
+  sudo: yes
+  tags: [tool, mailcatcher]
+  command: update-rc.d mailcatcher defaults
+
+- name: Tool | Start Mailcatcher via start script on {{ v_host }}
+  sudo: yes
+  tags: [tool, mailcatcher]
+  command: /etc/init.d/mailcatcher
+
+#########################################################################
+#### Git - Distributed Revision Control                              ####
+#########################################################################
+
+- name: Tool | Install git on {{ v_host }}
+  sudo: yes
+  tags: [tool, git]
+  apt: pkg=git-core state=latest
+
+- name: Tool | Push git config to {{ v_host }}
+  tags: [tool, git]
+  template:
+    src=gitconfig.j2
+    dest=~/.gitconfig
+
+#########################################################################
+#### Vim - Text Editor                                               ####
+#########################################################################
+
+# - name: Tool | Install Vim (huge version; no gui) to {{ v_host }}
+#   sudo: yes
+#   tags: [tool, vim]
+#   apt: pkg=vim-nox state=latest
+#
+# - name: Tool | Push Vim config (.vimrc) to {{ v_host }}
+#   tags: [tool, vim]
+#   copy:
+#     src={{ v_dot }}.vimrc
+#     dest={{ v_home }}.vimrc
+#
+# - name: Tool | Create Vim directories on {{ v_host }}
+#   tags: [tool, vim]
+#   file:
+#     state=directory
+#     path={{ v_home }}.vim/{{ item }}
+#   with_items:
+#     - bundle/vundle
+#     - sessions
+#
+# - name: Tool | Create default Vim session on {{ v_host }}
+#   sudo: yes
+#   tags: [tool, vim]
+#   command: touch {{ v_home }}.vim/sessions/wip
+#
+# - name: Tool | Clone vundle & solarized to {{ v_host }}
+#   tags: [tool, vim]
+#   git:
+#     repo=git://github.com/{{ item.repo }}.git
+#     dest={{ v_home }}.vim/bundle/{{ item.dest }}
+#   with_items:
+#     - { repo: 'gmarik/Vundle.vim',                 dest: 'vundle'}
+#     - { repo: 'altercation/vim-colors-solarized',  dest: 'vim-colors-solarized'}
+#
+# - name: Tool | Run vundle (Vim plugin manager) on {{ v_host }}
+#   tags: [tool, vim]
+#   command: vim +BundleInstall +qall creates={{ v_home }}.vim/bundle/ctrlp.vim
+
+#########################################################################
+#### UFW - Uncomplicated Firewall                                    ####
+#########################################################################
+
+- name: Tool | Disable ufw and set config to default on {{ v_host }}
+  sudo: yes
+  tags: [tool, ufw]
+  ufw: state=reset
+
+- name: Tool | Enable ufw logging on {{ v_host }}
+  sudo: yes
+  tags: [tool, ufw]
+  ufw: logging=on
+
+- name: Tool | ufw -> allow private network access on {{ v_host }}
+  sudo: yes
+  tags: [tool, ufw]
+  ufw: rule=allow src={{ item[0] }} to_port={{ item[1] }} proto=tcp
+  with_nested:
+    - [ '10.0.0.0/16', '172.16.0.0/16', '192.168.0.0/16' ]
+    - [ '80', '{{ v_ssh_port }}', '{{ m_catch_http_port }}', '{{ mysql_port }}' ]
+
+- name: Tool | ufw -> disallow all other requests on {{ v_host }}
+  sudo: yes
+  tags: [tool, ufw]
+  ufw: policy=deny
+
+- name: Tool | Reload ufw and enable startup on {{ v_host }}
+  sudo: yes
+  tags: [tool, ufw]
+  ufw: state=enabled
+
+#########################################################################
+#### Fail2ban - Intrusion Prevention (brute force)                   ####
+#########################################################################
+
+- name: Tool | Install fail2ban on {{ v_host }}
+  sudo: yes
+  tags: [tool, fail2ban]
+  apt: pkg=fail2ban state=latest
+
+- name: Tool | Configure fail2ban local jails on {{ v_host }}
+  sudo: yes
+  tags: [tool, fail2ban]
+  template:
+    src=jail.local.j2
+    dest=/etc/fail2ban/jail.local
+    mode=0644
+
+- name: Tool | Ensure fail2ban is started and enabled on {{ v_host }}
+  sudo: yes
+  tags: [tool, fail2ban]
+  service: name=fail2ban state=restarted enabled=yes
+
+- name: Tool | All done!
+  tags: [tool]
+  local_action: osx_say msg="tool playlist is complete" voice={{ v_voice }}

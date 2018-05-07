@@ -1,0 +1,17 @@
+#########################################################################
+#### filename:  main.yml                                             ####
+#### path:      ~/src/deploy/roles/drupal/tasks/                 ####
+#### role:      drupal development                                   ####
+#### purpose:   list of provisioning files to run                    ####
+#### version:   08/18/2014                                              ####
+#########################################################################
+
+---
+
+- include: initial.yml  # manage user & credentials
+- include: config.yml   # system config
+- include: tool.yml     # install & config tools
+- include: lemp.yml     # install EMP - Nginx, PHP, MariaDB
+- include: drupal.yml   # install Drupal & helper apps (Composer, Drush, Contrib)
+- include: final.yml    # tidy up
+- include: reset.yml    # reset vagrant default port, port forwarding & user

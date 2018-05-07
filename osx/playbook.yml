@@ -1,0 +1,53 @@
+# vim:fdm=marker
+---
+
+  ##########################################################
+  #  filename: playbook.yml                                #
+  #  path:     ~/src/deploy/ansible/osx/                  #
+  #  version:  03/15/2015                                  #
+  #  purpose:  master provisioning playbook                #
+  ##########################################################
+
+- hosts: servers # ubuntu server provisioning (vagrant & hosted)
+  gather_facts: yes
+  sudo: yes
+
+  vars_files:
+    - vars/main.yml
+    - vars/vault_server.yml
+
+  pre_tasks:
+    - include: tasks/init.yml
+
+  roles:
+    - role: init      #
+    - role: lockdown  #
+    - role: config    #
+    - role: tools     #
+    - role: lemp      #
+    - role: drupal    #
+    - role: finalize  #
+
+  tasks:
+    - include: tasks/swap.yml
+      when: "'droplets' in group_names"
+
+- hosts: local # local osx provisioning
+  gather_facts: yes
+  sudo: no
+
+  vars_files:
+    - vars/_private/vault_local.yml # all vaults need same password
+
+  roles:
+    - role: osx      #
+
+- hosts: local_jp # local osx provisioning
+  gather_facts: yes
+  sudo: no
+
+  vars_files:
+    - vars/_private/vault_local_jp.yml
+
+  roles:
+    - role: osx_jp      #

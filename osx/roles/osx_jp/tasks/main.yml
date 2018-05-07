@@ -1,0 +1,12 @@
+---
+
+##########################################################
+#  filename: main.yml	 		                               #
+#  path: ~/src/deploy/ansible/osx/osx/  #
+#  version: 04/05/2015	  	                             #
+#  purpose: master playbook for role             	                   #
+##########################################################
+
+- include: jp_app.yml
+- include: jp_app_config.yml
+- include: jp_os_config.yml

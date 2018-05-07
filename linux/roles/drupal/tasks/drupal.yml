@@ -1,0 +1,143 @@
+#########################################################################
+#### filename:  drupal.yml                                           ####
+#### path:      ~/src/deploy/roles/drupal/tasks/                 ####
+#### role:      drupal development                                   ####
+#### purpose:   install Drupal & helper apps                         ####
+#### version:   07/11/2014                                           ####
+#########################################################################
+
+---
+
+- name: Drupal | Starting drupal playlist on {{ v_host }}
+  tags: [drupal]
+  local_action: osx_say msg="drupal playlist is starting" voice={{ v_voice }}
+
+#########################################################################
+##### Composer - Dependency Manager                                  ####
+#########################################################################
+
+- name: Drupal | Install Composer on {{ v_host }}
+  sudo: no
+  tags: [drupal, composer]
+  shell:
+    curl -sS https://getcomposer.org/installer | php
+    creates={{ composer_path }}
+
+- name: Drupal | Move Composer into globally-accessible location on {{ v_host }}
+  sudo: yes
+  tags: [drupal, composer]
+  shell:
+    mv composer.phar {{ composer_path }}
+    creates={{ composer_path }}
+
+#########################################################################
+##### Drush - CLI for Drupal                                         ####
+#########################################################################
+
+- name: Drupal | Install Drush via Composer to {{ v_host }}
+  sudo: no
+  tags: [drupal, drush]
+  shell: composer global require drush/drush:dev-master
+
+#########################################################################
+#####  Drupal - Content Management Framework                         ####
+#########################################################################
+
+- name: Dev | Check if settings.php file exists at /sites/default on {{ v_host }}
+  tags: [drupal, drupal8]
+  stat: path={{ drup_core_path }}/settings.php
+  register: settings
+
+- name: Drupal | Clone Drupal to {{ v_host }}
+  sudo: no
+  tags: [drupal, drupal8]
+  git:
+    repo=http://git.drupal.org/project/drupal.git
+    dest={{ drup_install_path }}
+    version={{ drup_core_version }}
+  when: settings.stat.exists == false
+
+- name: Drupal | Create new database for Drupal on {{ v_host }}
+  tags: [drupal, drupal8]
+  mysql_db: name={{ drup_db_nm }} state=present
+  when: settings.stat.exists == false
+
+- name: Drupal | Create new database user for Drupal on {{ v_host }}
+  tags: [drupal, drupal8]
+  mysql_user: 
+    name={{ drup_db_user }}
+    password={{ drup_db_pass }}
+    host=localhost
+    priv={{ drup_db_nm }}.*:ALL
+    state=present
+  when: settings.stat.exists == false
+
+- name: Drupal | Create settings.php and services.yml files on {{ v_host }}
+  sudo: yes
+  tags: [drupal, drupal8]
+  command:
+    chdir={{ drup_core_path }}
+    {{ item }}
+  with_items:
+    - cp default.settings.php settings.php 
+    - cp default.services.yml services.yml
+  when: settings.stat.exists == false
+
+- name: Drupal | Install Drupal via Drush to {{ v_host }}
+  sudo: yes
+  tags: [drupal, drupal8]
+  command: 
+    chdir={{ drup_core_path }}
+    drush -yv site-install standard
+    --db-url=mysql://{{ drup_db_user }}:{{ drup_db_pass }}@localhost:{{ mysql_port }}/{{ drup_db_nm }}
+    --account-name={{ drup_user }}
+    --account-pass={{ drup_pass }}
+    --account-mail={{ drup_mail }}
+  when: settings.stat.exists == false
+
+- name: Dev | Check again if settings.php file exists at /sites/default on {{ v_host }}
+  tags: [drupal, drupal8, syncb]
+  stat: path={{ drup_core_path }}/settings.php
+  register: settings
+
+- name: Drupal | Make sites/default/files writeable on {{ v_host }}
+  sudo: yes
+  tags: [drupal, drupal8]
+  file:
+    path={{ item.d }}
+    owner={{ item.o }}
+    group={{ item.g }}
+    mode={{ item.p }}
+    state=directory
+    recurse=yes
+  with_items:
+    - { d: '{{ drup_core_path }}/files',        o: '{{ v_user }}', g: 'www-data', p: '2775' }
+    - { d: '{{ drup_core_path }}/settings.php', o: '{{ v_user }}', g: 'www-data', p: '0444' }
+    - { d: '{{ drup_core_path }}/services.yml', o: '{{ v_user }}', g: 'www-data', p: '0444' }
+  when: settings.stat.exists == true
+
+# - name: Drupal | Push public from guest to host
+#   sudo: yes
+#   tags: [drupal, drupal8, syncb]
+#   local_action: command scp -r -P {{ v_ssh_port }} {{ v_ip }}:{{ v_docroot }} /Users/GP/Work/projects/{{ v_vhost }}/www
+#   when: settings.stat.exists == true
+#   local_action: shell cd /Users/GP/Work/projects/{{ v_project }}/box && vagrant rsync-back
+
+- name: Drupal | Set Drupal site variables on {{ v_host }}
+  tags: [drupal, drupal8]
+  command:
+    chdir={{ drup_core_path }}
+    drush -yv config-set {{ item }}
+  with_items:
+    - system.date country.default US
+    - system.date first_day 1
+    - system.date timezone.default {{ v_zone }}
+    - system.file path.private ../private/files
+    - system.file path.temporary ../private/tmp
+    - system.site name {{ drup_site_name }}
+    - system.site mail {{ drup_site_mail }}
+  when: settings.stat.exists == true
+
+- name: Drupal | Drupal playlist all done!
+  tags: [drupal]
+  local_action: osx_say msg="drupal playlist is complete" voice={{ v_voice }}

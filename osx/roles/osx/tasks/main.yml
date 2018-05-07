@@ -1,0 +1,12 @@
+---
+
+##########################################################
+#  filename: main.yml	 		                               #
+#  path: ~/src/deploy/ansible/osx/osx/  #
+#  version: 03/14/2015	  	                             #
+#  purpose: master playbook for role             	                   #
+##########################################################
+
+- include: app.yml
+- include: app_config.yml
+- include: os_config.yml

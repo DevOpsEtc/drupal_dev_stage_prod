@@ -1,0 +1,14 @@
+# {{ ansible_managed }}
+
+[user]
+  name = {{ v_git_user }}
+  email = {{ v_git_mail }}
+
+[color]
+  ui = true
+
+[core]
+  editor = {{ v_git_edit|default('vi') }}
+
+[push]
+  default = {{ v_git_push|default('current') }}

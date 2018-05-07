@@ -1,0 +1,123 @@
+#########################################################################
+#### filename:  config.yml                                           ####
+#### path:      ~/src/deploy/roles/drupal/tasks/                 ####
+#### role:      drupal development                                   ####
+#### purpose:   system config                                        ####
+#### version:   07/07/2014                                           ####
+#########################################################################
+
+---
+
+- name: User | Starting config playlist on {{ v_host }}
+  tags: [config]
+  local_action: osx_say msg="config playlist has started" voice={{ v_voice }}
+
+#########################################################################
+#### .bashrc - Bash Shell Config                                     ####
+#########################################################################
+
+- name: Config | Push shell config to {{ v_host }}
+  tags: [config]
+  copy:
+    src={{ v_dot }}.bashrc
+    dest={{ v_home }}.bashrc
+
+- name: Config | Set hostname to {{ v_host }}
+  sudo: yes
+  tags: [config]
+  hostname: name={{ v_host }}
+
+- name: Config | Add related hostfile entry to {{ v_host }}
+  sudo: yes
+  tags: [config]
+  lineinfile:
+    dest=/etc/hosts
+    state=present
+    insertbefore=BOF
+    "line={{ v_ip }} {{ v_host }}"
+
+# tasks file for timezone
+- name: Set /etc/localtime to {{ timezone }}
+  sudo: yes
+  tags: [config]
+  copy: src=/usr/share/zoneinfo/{{ timezone }}
+        dest=/etc/localtime
+        owner=root
+        group=root
+        mode=0644
+        backup=yes
+
+- name: Set /etc/timezone to {{ timezone }}
+  sudo: yes
+  tags: [config]
+  template: dest=/etc/timezone src=timezone.j2
+
+- name: Config | Update timezone on {{ v_host }}
+  sudo: yes
+  tags: [config]
+  command: dpkg-reconfigure --frontend noninteractive tzdata
+
+- name: Config | Create symlinks on {{ v_host }}
+  sudo: yes
+  tags: [config]
+  file:
+    src={{ item.src }}
+    dest={{ v_home }}{{ item.dest }}
+    owner={{ v_user }}
+    group={{ v_user }}
+    state=link
+    force=yes
+  with_items:
+    - { src: '/var/log',          dest: 'logs'    }
+    - { src: '{{ v_docroot }}',   dest: 'www'  }
+
+- name: Config | Update OpenSSH settings on {{ v_host }}
+  sudo: yes
+  tags: [config]
+  lineinfile:
+    dest=/etc/ssh/sshd_config
+    state=present
+    regexp=^#?{{ item.key }}
+    insertafter=EOF
+    line={{ item.key }}" "{{ item.value }}
+  with_items:
+    - { key: 'UsePAM',                          value: 'no' }
+    - { key: 'PubkeyAuthentication',            value: 'yes' }
+    - { key: 'Protocol',                        value: '2' }
+    - { key: 'LoginGraceTime',                  value: '30' }
+    - { key: 'MaxAuthTries',                    value: '3' }
+    - { key: 'RSAAuthentication',               value: 'no' }
+    - { key: 'PasswordAuthentication',          value: 'no' }
+    - { key: 'PermitRootLogin',                 value: 'no' }
+    - { key: 'UseDNS',                          value: 'no' }
+    - { key: 'StrictModes',                     value: 'yes' }
+    - { key: 'UsePrivilegeSeparation',          value: 'yes' }
+    - { key: 'IgnoreRhosts',                    value: 'yes' }
+    - { key: 'AllowTcpForwarding',              value: 'yes' }
+    - { key: 'X11Forwarding',                   value: 'no' }
+    - { key: 'HostbasedAuthentication',         value: 'no' }
+    - { key: 'PermitEmptyPasswords',            value: 'no' }
+    - { key: 'ChallengeResponseAuthentication', value: 'no' }
+    - { key: 'KerberosAuthentication',          value: 'no' }
+    - { key: 'GSSAPIAuthentication',            value: 'no' }
+    - { key: 'GatewayPorts',                    value: 'no' }
+    - { key: 'PrintMotd',                       value: 'no' }
+    - { key: 'PrintLastLog',                    value: 'yes' }
+    - { key: 'TCPKeepAlive',                    value: 'no' }
+    - { key: 'ClientAliveInterval',             value: '30' }
+    - { key: 'ClientAliveCountMax',             value: '1000' }
+    - { key: 'Port',                            value: '{{ v_ssh_port }}' }
+    - { key: 'AllowUsers',                      value: '{{ v_user }}' }
+
+- name: Config | Reload ssh daemon on {{ v_host }}
+  sudo: yes
+  tags: [config]
+  service: name=ssh state=restarted
+
+- name: Config | Set ansible_ssh_port to {{ v_ssh_port }}
+  tags: [config]
+  set_fact: ansible_ssh_port={{ v_ssh_port }}
+
+- name: Config | All done!
+  tags: [config]
+  local_action: osx_say msg="config playlist is complete" voice={{ v_voice }}

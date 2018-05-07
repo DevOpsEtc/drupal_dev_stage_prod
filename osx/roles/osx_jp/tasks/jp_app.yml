@@ -1,0 +1,93 @@
+# vim:fdm=marker
+---
+
+  ##########################################################
+  #  filename: app.yml	 		                               #
+  #  path:     ~/.provision/playbook/roles/osx/tasks/  #
+  #  version:  04/05/2015	  	                             #
+  #  purpose:  app install             	                   #
+  ##########################################################
+
+- name: app | starting app playlist
+  tags: [app, voice]
+  osx_say: msg="starting app playlist" voice={{ v_voice }}
+
+# Brew {{{
+- name: app | brew tap
+  tags: [app, tap, php]
+  homebrew_tap: tap={{ item }} state=present
+  with_items:
+    - homebrew/dupes # https://github.com/Homebrew/homebrew-dupes
+    - homebrew/versions # https://github.com/Homebrew/homebrew-versions
+    - caskroom/cask # https://github.com/caskroom/homebrew-cask
+    - caskroom/versions # https://github.com/caskroom/homebrew-versions
+
+- name: app | brew update & upgrade
+  tags: [app, brew]
+  homebrew: update_homebrew=yes upgrade_all=yes
+
+- name: app | brew install bash
+  tags: [app, brew]
+  homebrew: name=bash state=present
+  # http://www.gnu.org/software/bash/
+
+- name: app | brew install python
+  tags: [app, brew]
+  homebrew: name=python state=present
+  # https://www.python.org
+
+- name: app | brew install cask
+  tags: [app, brew]
+  homebrew: name=brew-cask state=present
+  # https://github.com/caskroom/homebrew-cask
+  # }}}
+
+# Cask {{{
+- name: app | cask install virtualbox
+  tags: [app, cask]
+  homebrew_cask: name=virtualbox state=present
+  # https://www.virtualbox.org
+
+- name: app | cask install google chrome
+  tags: [app, cask]
+  homebrew_cask: name=google-chrome state=present
+  # http://www.google.com/chrome
+
+- name: app | cask install cakebrew
+  tags: [app, cask]
+  homebrew_cask: name=cakebrew state=present
+  # https://www.cakebrew.com
+
+- name: app | cask install appcleaner
+  tags: [app, cask]
+  homebrew_cask: name=appcleaner state=present
+  # http://appcleaner.onfreedownload.com
+
+- name: app | cask install keka
+  tags: [app, cask]
+  homebrew_cask: name=keka state=present
+  # http://www.kekaosx.com
+
+- name: app | cask install disk-inventory-x
+  tags: [app, cask]
+  homebrew_cask: name=disk-inventory-x state=present
+  # https://pqrs.org/osx/karabiner/seil.html.en
+
+- name: app | cask install libreoffice
+  tags: [app, cask]
+  homebrew_cask: name=libreoffice state=present
+  # https://www.libreoffice.org
+
+- name: app | cask install handbrake
+  tags: [app, cask]
+  homebrew_cask: name=handbrake state=present
+  # https://handbrake.fr
+
+- name: app | cask install burn
+  tags: [app, cask]
+  homebrew_cask: name=burn state=present
+  # http://burn-osx.sourceforge.net
+
+- name: app | app playlist complete
+  tags: [app, voice]
+  osx_say: msg="app playlist is complete" voice={{ v_voice }}

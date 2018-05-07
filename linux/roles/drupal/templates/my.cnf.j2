@@ -1,0 +1,23 @@
+#########################################################################
+#### filename:  my.cnf                                               ####
+#### path:      ~/my.cnf                                             ####
+#### purpose:   MariaDB configuration                                ####
+#### version:   09/09/2014                                           ####
+#########################################################################
+{#######################################################################}
+{#### ansible template: my.cnf.j2                                   ####}
+{#### path:             ~/src/deploy/roles/drupal/templates     ####}
+{#### role:             drupal development                          ####}
+{#######################################################################}
+
+# used by mysqli connection; called via php function: parse_ini_file()
+[database]
+host={{ v_ip }}
+user=root
+password={{ mysql_root_pass }}
+dbname=mysql
+
+# used by mysql cli; called via shell command: mysql
+[client]
+user=root
+password={{ mysql_root_pass }}

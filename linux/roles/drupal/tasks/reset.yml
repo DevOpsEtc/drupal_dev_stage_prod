@@ -1,0 +1,33 @@
+#########################################################################
+#### filename:  reset.yml                                            ####
+#### path:      ~/src/deploy/roles/drupal/tasks/                 ####
+#### role:      drupal development                                   ####
+#### purpose:   reset vagrant and ansible to pre-provision settings  ####
+#### version:   08/15/2014                                           ####
+#########################################################################
+
+---
+
+- name: Reset | Restore Vagrantfile to pre-provision settings for {{ v_project }}
+  tags: [reset]
+  local_action: lineinfile
+    dest=~/work/projects/{{ v_project }}/box/Vagrantfile
+    state=present
+    regexp=^\s+|{{ item }}
+    line="  "#{{ item }}
+  with_items:
+    - '"config.ssh.username = \"{{ v_user }}\""'
+    - '"config.ssh.private_key_path = \"{{ v_key }}\""'
+    - '"config.ssh.port = \"{{ v_ssh_port }}\""'
+    - '"config.vm.network \"forwarded_port\", guest: 22, host: 2222, id: \"ssh\", disabled: \"true\""'
+    - '"config.vm.network \"forwarded_port\", guest: {{ v_ssh_port }}, host: {{ v_ssh_port }}"'
+
+# - name: Reset | Restore ansible_hosts with post-provision settings on {{ lookup('env', 'HOST') }}
+#   tags: [reset]
+#   local_action: lineinfile
+#     dest=/Users/GP/Work/provision/ansible_hosts
+#     state=present
+#     regexp=^{{ v_ip }}
+#     line='{{ v_ip }} ansible_ssh_user=vagrant ansible_ssh_private_key_file=~/.vagrant.d/insecure_private_key'
+#   # needed for ansible commands to work post-provision
+#   # before a vagrant destroy & vagrant up, need to run playbook --tags 'reset'
