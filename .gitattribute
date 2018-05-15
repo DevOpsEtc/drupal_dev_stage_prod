@@ -1,0 +1,2 @@
+# hide these files from GitHub’s linguist
+vagrant/* linguist-vendored
