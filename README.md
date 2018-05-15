@@ -3,7 +3,7 @@
 ### Abandoned project... only here for personal reference
 
 ### Ansible Deployment
-Deployment project that stands up a Drupal development environment on OSX, and a staging/production environment on Linux. Fully tagged and utilizes Ansible vault for keys and credentials.
+Deployment project that stands up a Drupal development environment on OSX and corresponding staging/production environment on Linux. Fully tagged and utilizes Ansible vault for keys and credentials.
 
 ### OSX Development Deployment:
 Kicked off via osx/playbook.yml
