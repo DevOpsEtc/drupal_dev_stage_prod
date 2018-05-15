@@ -1,5 +1,7 @@
 <h1> <img src="image/logo.png"> DevOps /etc</h1>
 
+### Abandoned project... only here for personal reference
+
 ### Ansible Deployment
 Deployment project that stands up a Drupal development environment on OSX, and a staging/production environment on Linux. Fully tagged and utilizes Ansible vault for keys and credentials.
 
@@ -38,6 +40,3 @@ alias aas='ansible -i $p_inv stage -a'      # run adhoc command: stage [command]
 alias aap='ansible -i $p_inv prod -a'       # run adhoc command: prod [command]
 alias aaP='ansible -i $p_inv all -m ping'   # run adhoc ping: all
 ```
-
-### Notes:
-This is an abandoned project that's only here for my personal reference
